@@ -264,13 +264,13 @@
     .mosquito .legs:before{left:6px;transform:rotate(12deg)}
     .mosquito .legs:after{right:6px;transform:rotate(-12deg)}
 
-    /* 反杀蚊子（会叮人） */
+    /* 愤怒蚊子（会叮人） */
     .mosquito.revenge .body{background:repeating-linear-gradient(115deg,#b81d33 0 5px,#ff5168 5px 10px)}
     .mosquito.revenge .head{background:#b81d33}
     .mosquito.revenge{filter:drop-shadow(0 0 14px rgba(255,64,88,.85)) drop-shadow(0 6px 0 rgba(42,22,48,.16));animation:angry .3s infinite alternate}
     @keyframes angry{to{transform:translate(-50%,-50%) rotate(-6deg) scale(1.05)}}
     .mosquito.revenge:after{
-      content:"反杀";position:absolute;left:50%;top:-16px;transform:translateX(-50%);
+      content:"愤怒";position:absolute;left:50%;top:-16px;transform:translateX(-50%);
       padding:1px 6px;border-radius:999px;background:var(--red);color:white;font-size:12px;
       border:2px solid white;white-space:nowrap;font-weight:900;
     }
@@ -368,8 +368,9 @@
       position:fixed;z-index:80;left:0;top:0;width:84px;height:138px;
       transform:translate(-50%,-30px);
       transform-origin:50% 30px;
-      pointer-events:none;will-change:transform,left,top;
+      pointer-events:none;will-change:transform,left,top;opacity:0;
     }
+    #app.playing .swatter{opacity:1}
     .swatter .net{
       position:absolute;left:50%;top:0;width:68px;height:68px;border-radius:50%;
       transform:translateX(-50%);
@@ -420,17 +421,42 @@
     }
     @keyframes splat{to{opacity:0;transform:translate(-50%,-50%) scale(1.35)}}
 
-    .combo{
-      position:absolute;z-index:24;left:50%;top:120px;
-      transform:translateX(-50%) scale(.6);text-align:center;
-      pointer-events:none;opacity:0;transition:opacity .14s ease,transform .14s ease;
+    .combo-burn{
+      position:absolute;z-index:22;inset:-18% -28% 20%;
+      pointer-events:none;opacity:var(--burnOpacity,0);
+      transform:scale(var(--burnScale,1));
+      transform-origin:50% 38%;
+      background:
+        radial-gradient(circle at 50% 58%,rgba(255,238,90,.74) 0 8%,rgba(255,121,45,.56) 16%,rgba(255,64,88,.34) 28%,transparent 50%),
+        radial-gradient(circle at 30% 68%,rgba(255,64,88,.42),transparent 24%),
+        radial-gradient(circle at 70% 62%,rgba(255,176,48,.38),transparent 26%);
+      filter:blur(10px) saturate(1.4);
+      mix-blend-mode:screen;
+      transition:opacity .18s ease,transform .18s ease;
     }
-    .combo.show{opacity:1;transform:translateX(-50%) scale(1)}
-    .combo b{display:block;font-size:50px;line-height:1;color:var(--yellow);text-shadow:0 4px #c2371f,0 0 20px rgba(255,225,90,.75)}
+    .combo-burn.show{opacity:var(--burnOpacity,.2)}
+    .combo{
+      --comboScale:.6;
+      --heat:0;
+      position:absolute;z-index:24;left:50%;top:120px;
+      transform:translateX(-50%) scale(var(--comboScale));text-align:center;
+      pointer-events:none;opacity:0;transition:opacity .14s ease;
+    }
+    .combo.show{opacity:1;--comboScale:1}
+    .combo:before{
+      content:"";position:absolute;left:50%;top:62%;width:120px;height:92px;
+      transform:translate(-50%,-50%) scale(calc(.68 + var(--heat) * .48));
+      border-radius:50% 50% 42% 42%;
+      background:
+        radial-gradient(circle at 50% 72%,rgba(255,236,84,.95) 0 18%,rgba(255,126,36,.88) 32%,rgba(255,64,88,.58) 50%,transparent 72%);
+      opacity:calc(.2 + var(--heat) * .62);
+      filter:blur(5px);
+    }
+    .combo b{position:relative;display:block;font-size:50px;line-height:1;color:var(--yellow);text-shadow:0 4px #c2371f,0 0 calc(20px + var(--heat) * 22px) rgba(255,225,90,.85)}
     .combo small{display:block;font-size:15px;font-weight:900;color:white;letter-spacing:.2em;text-shadow:0 2px #a3263a}
     .combo.hot b{color:var(--red);text-shadow:0 4px #fff,0 0 22px rgba(255,64,88,.85)}
     .combo.pop{animation:combopop .3s ease}
-    @keyframes combopop{0%{transform:translateX(-50%) scale(1)}42%{transform:translateX(-50%) scale(1.34)}100%{transform:translateX(-50%) scale(1)}}
+    @keyframes combopop{0%{--comboScale:1}42%{--comboScale:1.34}100%{--comboScale:1}}
 
     .screen{
       position:absolute;z-index:60;inset:0;display:grid;place-items:center;padding:22px;
@@ -453,6 +479,53 @@
     }
     .btn:active{transform:translateY(5px);box-shadow:0 3px 0 #9e2636,0 8px 16px rgba(58,27,45,.18)}
     .mini-rank{margin-top:12px;padding:9px 10px;border-radius:16px;background:rgba(255,255,255,.46);color:#5a3655;font-size:14px;font-weight:900}
+    .start-screen{
+      display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;
+      padding:0 20px calc(16px + var(--safe-bottom));
+      background-image:url("assets/home-bg.png");
+      background-size:cover;
+      background-position:center top;
+      background-repeat:no-repeat;
+      cursor:auto;
+    }
+    .start-actions{display:grid;gap:12px;filter:drop-shadow(0 10px 10px rgba(20,35,0,.28))}
+    .start-actions .btn{
+      min-height:66px;border-color:#fff6b6;border-radius:22px;
+      background:linear-gradient(180deg,#fff15b,#ffd229 48%,#f3a800);
+      color:#171631;font-size:31px;text-shadow:0 2px 0 rgba(255,255,255,.68);
+      box-shadow:0 8px 0 #151100,0 14px 0 rgba(255,255,255,.36),0 18px 28px rgba(0,0,0,.22),inset 0 4px rgba(255,255,255,.55);
+    }
+    .start-secondary-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .start-mini-btn{
+      min-height:54px;border-radius:18px;border:4px solid #fff6b6;
+      background:linear-gradient(180deg,#272727,#080808);color:#fff15b;font-size:20px;font-weight:900;
+      text-shadow:0 3px 0 #000;box-shadow:0 7px 0 #c5a400,0 12px 20px rgba(0,0,0,.22),inset 0 3px rgba(255,255,255,.18);
+    }
+    .start-mini-btn.share{background:linear-gradient(180deg,#97db19,#5da313);color:#101800;text-shadow:0 2px 0 rgba(255,255,255,.44);box-shadow:0 7px 0 #152500,0 12px 20px rgba(0,0,0,.22),inset 0 3px rgba(255,255,255,.38)}
+    .start-mini-btn:active{transform:translateY(4px);box-shadow:0 3px 0 rgba(60,30,80,.5)}
+    .modal{
+      position:absolute;z-index:74;inset:0;display:grid;place-items:center;padding:22px;
+      background:rgba(23,22,49,.5);backdrop-filter:blur(4px);cursor:auto;
+      transition:opacity .18s ease,transform .18s ease;
+    }
+    .modal.hide{opacity:0;pointer-events:none;transform:scale(1.03)}
+    .modal-panel{
+      width:min(354px,100%);border-radius:24px;border:5px solid white;
+      background:linear-gradient(180deg,#fff8dc,#ffd765);color:#3c2440;
+      box-shadow:0 12px 0 #9b6338,0 28px 46px rgba(35,22,54,.36),inset 0 5px rgba(255,255,255,.76);
+      padding:18px 16px 16px;
+    }
+    .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+    .modal-title{font-size:28px;font-weight:900;color:#ff4058;text-shadow:0 3px white}
+    .modal-close{width:42px;height:42px;border-radius:50%;border:4px solid #fff;background:#2a1630;color:#fff;font-size:24px;line-height:1;box-shadow:0 5px 0 rgba(42,22,48,.35)}
+    .rank-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+    .rank-row{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:8px;padding:9px 10px;border-radius:14px;background:rgba(255,255,255,.56);font-weight:900}
+    .rank-row .tag{display:block;margin-top:2px;font-size:11px;color:#87525f;font-weight:800}
+    .share-card{display:grid;gap:10px;padding:14px;border-radius:18px;background:rgba(255,255,255,.58);font-weight:900;line-height:1.45}
+    .share-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .modal-btn{min-height:48px;border-radius:16px;border:4px solid white;background:#ff4058;color:white;font-size:17px;font-weight:900;box-shadow:0 6px 0 #9e2636}
+    .modal-btn.secondary{background:#4e86ff;box-shadow:0 6px 0 #2d55b9}
+    .share-status{min-height:18px;margin-top:10px;text-align:center;color:#7c4a1a;font-size:13px;font-weight:900}
 
     .between{
       position:absolute;z-index:50;left:50%;top:42%;transform:translate(-50%,-50%) scale(.82);
@@ -464,6 +537,10 @@
     .between.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
     .between b{display:block;font-size:31px;text-shadow:0 4px rgba(0,0,0,.25)}
     .between span{display:block;margin-top:6px;font-size:15px;color:#e9e6ff}
+
+    @media (prefers-reduced-motion: reduce){
+      *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+    }
   </style>
 </head>
 <body>
@@ -486,16 +563,52 @@
       <div class="pill gold"><small>拍死</small><b id="score">0</b></div>
     </div>
 
+    <div class="combo-burn" id="comboBurn"></div>
     <div class="combo" id="combo"><b>2</b><small>连击</small></div>
     <div class="between" id="between"><b>第2关</b><span>它们记住你了。</span></div>
     <div class="peacebubble" id="peacebubble">它似乎在等你的决定… <b>(别动手?)</b></div>
 
-    <section class="screen" id="start">
-      <div class="panel">
-        <h1>叮了个包</h1>
-        <p>第1关：把蚊子全拍下来。<br>第2关：母蚊子孵了一窝来报仇——专打红色「反杀」蚊，别让它们叮满你 10 个包。</p>
-        <div class="mini-rank" id="bestStart" style="margin-bottom:14px">最高纪录 0 分</div>
-        <button class="btn" id="startBtn" type="button">开拍</button>
+    <section class="screen start-screen" id="start">
+      <div class="start-actions" id="startActions">
+        <button class="btn" id="startBtn" type="button">开始游戏</button>
+        <div class="start-secondary-actions">
+          <button class="start-mini-btn" id="rankBtn" type="button">排行榜</button>
+          <button class="start-mini-btn share" id="shareBtn" type="button">分享</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="modal hide" id="rankModal" aria-hidden="true">
+      <div class="modal-panel">
+        <div class="modal-head">
+          <div class="modal-title">好友排行</div>
+          <button class="modal-close" id="rankCloseBtn" type="button" aria-label="关闭排行榜">×</button>
+        </div>
+        <ol class="rank-list">
+          <li class="rank-row"><b>1</b><span>阿包猎手<small class="tag">已分享战绩</small></span><strong>186</strong></li>
+          <li class="rank-row"><b>2</b><span>今晚不痒<small class="tag">邀你来破纪录</small></span><strong>152</strong></li>
+          <li class="rank-row"><b>3</b><span>红包制造机<small class="tag">连击最高 18</small></span><strong>139</strong></li>
+          <li class="rank-row"><b>4</b><span>小刀老师<small class="tag">待挑战好友</small></span><strong>128</strong></li>
+          <li class="rank-row"><b>5</b><span>拍子别停<small class="tag">刚刚截图发群</small></span><strong>111</strong></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="modal hide" id="shareModal" aria-hidden="true">
+      <div class="modal-panel">
+        <div class="modal-head">
+          <div class="modal-title">分享挑战</div>
+          <button class="modal-close" id="shareCloseBtn" type="button" aria-label="关闭分享">×</button>
+        </div>
+        <div class="share-card">
+          <span>我在《叮了个包》里叮死了一屏蚊子。</span>
+          <span>来挑战我的最高分，看看谁先被叮满 10 个包。</span>
+        </div>
+        <div class="share-actions">
+          <button class="modal-btn" id="nativeShareBtn" type="button">系统分享</button>
+          <button class="modal-btn secondary" id="copyShareBtn" type="button">复制文案</button>
+        </div>
+        <div class="share-status" id="shareStatus"></div>
       </div>
     </section>
 
@@ -514,6 +627,7 @@
     </div>
   </div>
 
+  <script src="vendor/gsap.min.js"></script>
   <script>
     (function(){
       "use strict";
@@ -530,6 +644,7 @@
       var scoreEl = document.getElementById("score");
       var modeEl = document.getElementById("mode");
       var comboEl = document.getElementById("combo");
+      var comboBurnEl = document.getElementById("comboBurn");
       var healthbarEl = document.getElementById("healthbar");
       var hpfillEl = document.getElementById("hpfill");
       var hpnumEl = document.getElementById("hpnum");
@@ -537,17 +652,25 @@
       var resultTitle = document.getElementById("resultTitle");
       var resultText = document.getElementById("resultText");
       var rankEl = document.getElementById("rank");
-      var bestStartEl = document.getElementById("bestStart");
+      var rankBtn = document.getElementById("rankBtn");
+      var shareBtn = document.getElementById("shareBtn");
+      var rankModal = document.getElementById("rankModal");
+      var shareModal = document.getElementById("shareModal");
+      var rankCloseBtn = document.getElementById("rankCloseBtn");
+      var shareCloseBtn = document.getElementById("shareCloseBtn");
+      var nativeShareBtn = document.getElementById("nativeShareBtn");
+      var copyShareBtn = document.getElementById("copyShareBtn");
+      var shareStatus = document.getElementById("shareStatus");
 
       // 配置
       var LV1_COUNT = 8;          // 第一关蚊子数
       var MAX_HP = 10;            // 生命值
       var HIT_RADIUS = 54;        // 拍击判定半径
       var LV2_START = 13;         // 第二关孵化初始蚊子
-      var LV2_START_REVENGE = 5;  // 其中反杀蚊子数
+      var LV2_START_REVENGE = 5;  // 其中愤怒蚊子数
       var SPAWN_BASE = 900;       // 第二关繁衍间隔(ms)
       var SPAWN_MIN = 330;        // 繁衍最快间隔
-      var MIN_REVENGE = 5;        // 场上反杀蚊低于此数时优先补充
+      var MIN_REVENGE = 5;        // 场上愤怒蚊低于此数时优先补充
       var MOB_CAP = 50;           // 场上蚊子上限
       var BITE_DAMAGE = 1;        // 每次叮咬扣血
       var BITE_COOLDOWN = 1000;   // 叮后退避时间(ms)
@@ -561,7 +684,7 @@
       var KING_DIVE_INTERVAL = 3200; // 蚊王亲自俯冲叮人的间隔(ms)
       var KING_DIVE_DAMAGE = 3;   // 蚊王俯冲扣血
       var L3_MOB_CAP = 48;        // 第三关场上小蚊上限
-      var L3_REVENGE_RATE = 0.78; // 召唤出反杀蚊的概率
+      var L3_REVENGE_RATE = 0.78; // 召唤出愤怒蚊的概率
 
       var mosquitoes = [];
       var mother = null;
@@ -573,6 +696,7 @@
       var hp = MAX_HP;
       var level = 1;
       var remaining = 0;
+      var angryRemaining = 0;
       var score = 0;
       var running = false;
       var hatched = false;
@@ -587,7 +711,9 @@
       var bestCombo = 0;
       var audioCtx = null;
       var highScore = 0;
+      var reducedMotion = false;
       try{ highScore = parseInt(localStorage.getItem("dinggebao_best"),10) || 0; }catch(error){}
+      try{ reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(error){}
 
       var deathLines = ["啪!","叮死你","拍扁","碎!","得手"];
       var enrageLines = ["拍错了!","激怒了","它记仇了","变敌"];
@@ -596,12 +722,42 @@
       function biteY(){ return app.clientHeight - app.clientHeight * 0.40; }
       function airTop(){ return 116; }
       function airBottom(){ return biteY() - 30; }
+      function canUseGsap(){ return !!(window.gsap && !reducedMotion); }
+      function scatterPoint(index,total){
+        var cols = Math.ceil(Math.sqrt(total * 1.35));
+        var rows = Math.ceil(total / cols);
+        var cellW = (app.clientWidth - 112) / Math.max(1, cols);
+        var cellH = (airBottom() - airTop() - 24) / Math.max(1, rows);
+        var col = index % cols;
+        var row = Math.floor(index / cols);
+        return {
+          x: clamp(56 + cellW * (col + 0.5) + rand(-cellW * 0.22, cellW * 0.22), 54, app.clientWidth - 54),
+          y: clamp(airTop() + 18 + cellH * (row + 0.5) + rand(-cellH * 0.22, cellH * 0.22), airTop(), airBottom())
+        };
+      }
+      function openSpawnPoint(){
+        var point = null;
+        var best = null;
+        var bestDist = -1;
+        for(var tries=0; tries<18; tries++){
+          point = {x:rand(54, app.clientWidth - 54), y:rand(airTop(), airTop() + Math.max(72, (airBottom() - airTop()) * 0.7))};
+          var nearest = Infinity;
+          for(var i=0;i<mosquitoes.length;i++){
+            if(!mosquitoes[i].alive) continue;
+            nearest = Math.min(nearest, Math.hypot(point.x - mosquitoes[i].x, point.y - mosquitoes[i].y));
+          }
+          if(nearest > bestDist){ bestDist = nearest; best = point; }
+          if(nearest >= 78) return point;
+        }
+        return best || {x:app.clientWidth / 2, y:airTop() + 50};
+      }
 
       function start(){
         clearAll();
         hp = MAX_HP;
         level = 1;
         score = 0;
+        angryRemaining = 0;
         combo = 0;
         comboTimer = 0;
         bestCombo = 0;
@@ -619,11 +775,15 @@
         hideCombo();
         buildHearts();
         app.classList.remove("hurt");
+        app.classList.add("playing");
         startScreen.classList.add("hide");
         resultScreen.classList.add("hide");
+        hideModal(rankModal);
+        hideModal(shareModal);
         remaining = LV1_COUNT;
         for(var i=0;i<LV1_COUNT;i++){
-          spawnMosquito(rand(54,app.clientWidth-54),rand(airTop(),airBottom()),"normal");
+          var point = scatterPoint(i, LV1_COUNT);
+          spawnMosquito(point.x, point.y, "normal");
         }
         updateHud();
         cancelAnimationFrame(raf);
@@ -657,6 +817,7 @@
           immune:0,
           state:"air",      // air | dive | bite | retreat
           biteCd:0,
+          countsAngry:false,
           alive:true
         };
         mosquitoes.push(m);
@@ -673,6 +834,7 @@
           if(comboTimer <= 0) breakCombo();
         }
         if(level === 2 && hatched){
+          if(angryRemaining <= 0){ startLevel3(); return; }
           lv2Elapsed += dt;
           spawnInterval = Math.max(SPAWN_MIN, SPAWN_BASE - lv2Elapsed * 0.02);
           spawnTimer -= dt;
@@ -680,7 +842,6 @@
             spawnTimer = spawnInterval;
             breedFromMother();
           }
-          if(remaining <= 0){ startLevel3(); }
         }
         if(level === 3){
           updateKing(dt);
@@ -797,6 +958,7 @@
         m.el.classList.add("gorged");
         hurtFlash();
         healthHit();
+        vibrate("hurt");
         biteSound(dmg);
         updateHud();
         if(hp <= 0){ lose(); }
@@ -822,6 +984,7 @@
         lastTap.y = clientY - rect.top;
         splat(lastTap.x, lastTap.y);
         shake();
+        vibrate("hit");
 
         // 第三关：拍到蚊王或护卫 → 立即开战
         if(level === 3 && phase3 === "standoff" && (m.type === "king" || m.type === "guard")){
@@ -847,7 +1010,7 @@
         }
 
         if(level >= 2 && m.type === "normal"){
-          // 误拍普通蚊子 → 激怒变反杀
+          // 误拍普通蚊子 → 激怒变愤怒
           enrage(m);
           breakCombo();
           floatText(lastTap.x, lastTap.y, pick(enrageLines));
@@ -855,7 +1018,7 @@
           return;
         }
 
-        // 击杀（第一关任意蚊子 / 反杀蚊子）
+        // 击杀（第一关任意蚊子 / 愤怒蚊子）
         killMosquito(m);
         combo += 1;
         comboTimer = 1500;
@@ -873,14 +1036,28 @@
       function enrage(m){
         m.type = "revenge";
         m.el.classList.add("revenge");
+        if(level === 2){ addAngryTarget(m); }
         m.immune = 6;
         m.biteCd = 600;
         m.state = "air";
       }
 
+      function addAngryTarget(m){
+        if(!m || m.countsAngry) return;
+        m.countsAngry = true;
+        angryRemaining += 1;
+        updateHud();
+      }
+      function clearAngryTarget(m){
+        if(!m || !m.countsAngry) return;
+        m.countsAngry = false;
+        angryRemaining = Math.max(0, angryRemaining - 1);
+      }
+
       function killMosquito(m){
         m.alive = false;
-        remaining = Math.max(0, remaining - 1);
+        if(level === 2 && m.type === "revenge"){ clearAngryTarget(m); }
+        if(level === 1){ remaining = Math.max(0, remaining - 1); }
         var idx = mosquitoes.indexOf(m);
         if(idx >= 0) mosquitoes.splice(idx, 1);
         // 坠落动画
@@ -917,21 +1094,23 @@
         var cx = mother ? mother.x : app.clientWidth / 2;
         var cy = mother ? mother.y : biteY() - 40;
         remaining = 0;
+        angryRemaining = 0;
         for(var i=0;i<LV2_START;i++){
           var type = i < LV2_START_REVENGE ? "revenge" : "normal";
-          var m = spawnMosquito(cx + rand(-30,30), cy + rand(-30,10), type);
-          m.y = clamp(cy + rand(-40,-10), airTop(), airBottom());
+          var hatchPoint = scatterPoint(i, LV2_START + 1);
+          var m = spawnMosquito(hatchPoint.x, hatchPoint.y, type);
+          if(type === "revenge"){ addAngryTarget(m); }
           m.vy = rand(-2.4,-1.2);
           m.biteCd = rand(300, 1400);
-          remaining++;
         }
         // 母蚊子化为普通蚊子加入战斗
         if(mother){
           mother.el.classList.remove("mother","hatch");
           mother.el.style.transform = "translate(-50%,-50%)";
           mother.state = "air";
-          mother.y = clamp(cy - 30, airTop(), airBottom());
-          remaining++;
+          var motherPoint = scatterPoint(LV2_START, LV2_START + 1);
+          mother.x = motherPoint.x;
+          mother.y = motherPoint.y;
           mother = null;
         }
         hatched = true;
@@ -943,18 +1122,17 @@
       }
 
       function breedFromMother(){
-        var cx = rand(60, app.clientWidth - 60);
-        var cy = airTop() + rand(0, 60);
+        var point = openSpawnPoint();
         var revengeOnField = 0;
         for(var i=0;i<mosquitoes.length;i++){
           if(mosquitoes[i].alive && mosquitoes[i].type === "revenge") revengeOnField++;
         }
-        // 场上反杀蚊不足时优先补充，消除"没敌可打"的空窗
+        // 场上愤怒蚊不足时优先补充，消除"没敌可打"的空窗
         var type = (revengeOnField < MIN_REVENGE || Math.random() < 0.6) ? "revenge" : "normal";
-        var m = spawnMosquito(cx, cy, type);
+        var m = spawnMosquito(point.x, point.y, type);
+        if(type === "revenge"){ addAngryTarget(m); }
         m.vy = rand(0.4, 1.4);
         m.biteCd = rand(150, 700);
-        remaining++;
       }
 
       // ===== 第三关·蚊王 =====
@@ -965,6 +1143,7 @@
         kingShield = KING_SHIELD;
         hatched = true;
         remaining = 0;
+        angryRemaining = 0;
         modeEl.textContent = "蚊王";
         // 清掉场上残留，确保对峙只有唯一蚊王 + 2 护卫
         mosquitoes.forEach(function(m){ m.el.remove(); });
@@ -1045,6 +1224,7 @@
         hurtFlash();
         healthHit();
         shake();
+        vibrate("hurt");
         biteSound(KING_DIVE_DAMAGE);
         updateHud();
         if(hp <= 0){ lose(); }
@@ -1053,7 +1233,7 @@
       function kingSummon(){
         var cx = king ? king.x : app.clientWidth / 2;
         var cy = king ? king.y : airTop() + 40;
-        var type = Math.random() < 0.5 ? "revenge" : "normal";
+        var type = Math.random() < L3_REVENGE_RATE ? "revenge" : "normal";
         var m = spawnMosquito(cx + rand(-24, 24), cy + rand(6, 34), type);
         m.vy = rand(0.4, 1.4);
         m.biteCd = rand(150, 700);
@@ -1136,6 +1316,7 @@
       }
 
       function finish(outcome){
+        app.classList.remove("playing");
         hideCombo();
         hidePeace();
         var record = score > highScore;
@@ -1157,21 +1338,63 @@
           loseJingle();
         }
         rankEl.textContent = (record ? "新纪录! " : "") + "最高纪录 " + highScore + " 分";
-        if(bestStartEl) bestStartEl.textContent = "最高纪录 " + highScore + " 分";
         resultScreen.classList.remove("hide");
       }
 
       function showCombo(){
         if(combo < 2){ hideCombo(); return; }
+        var heat = Math.min(1, combo / 18);
         comboEl.querySelector("b").textContent = combo;
+        comboEl.style.setProperty("--heat", heat.toFixed(2));
         comboEl.classList.toggle("hot", combo >= 6);
         comboEl.classList.add("show");
         comboEl.classList.remove("pop");
         void comboEl.offsetWidth;
         comboEl.classList.add("pop");
+        if(comboBurnEl){
+          comboBurnEl.classList.add("show");
+          comboBurnEl.style.setProperty("--burnOpacity", (0.14 + heat * 0.48).toFixed(2));
+          comboBurnEl.style.setProperty("--burnScale", (1 + heat * 0.2).toFixed(2));
+        }
+        if(canUseGsap()){
+          window.gsap.killTweensOf([comboEl, comboBurnEl]);
+          window.gsap.fromTo(comboEl, {"--comboScale": 0.88 + heat * 0.2}, {"--comboScale": 1 + heat * 0.12, duration:0.18, ease:"power3.out"});
+          window.gsap.fromTo(comboBurnEl, {opacity:0.08 + heat * 0.18}, {opacity:0.14 + heat * 0.48, duration:0.22, ease:"power2.out"});
+        }
+        if(combo === 6 || combo === 12 || combo === 18){ vibrate("combo"); }
       }
-      function hideCombo(){ comboEl.classList.remove("show"); }
+      function hideCombo(){
+        comboEl.classList.remove("show");
+        comboEl.style.setProperty("--heat", "0");
+        if(comboBurnEl){
+          if(canUseGsap()){
+            window.gsap.to(comboBurnEl, {opacity:0, duration:0.2, ease:"power2.out", onComplete:function(){ comboBurnEl.classList.remove("show"); }});
+          }else{
+            comboBurnEl.classList.remove("show");
+            comboBurnEl.style.setProperty("--burnOpacity", "0");
+          }
+        }
+      }
       function breakCombo(){ combo = 0; comboTimer = 0; hideCombo(); }
+
+      function animateStartScreen(){
+        if(!canUseGsap()) return;
+        window.gsap.set(".start-actions", {opacity:1});
+        window.gsap.from(".start-actions", {y:18, scale:.98, duration:.28, ease:"power3.out"});
+      }
+      function openModal(modal){
+        if(!modal) return;
+        modal.classList.remove("hide");
+        modal.setAttribute("aria-hidden", "false");
+        if(canUseGsap()){
+          window.gsap.fromTo(modal.querySelector(".modal-panel"), {y:24, scale:.94, opacity:0}, {y:0, scale:1, opacity:1, duration:.24, ease:"power3.out"});
+        }
+      }
+      function hideModal(modal){
+        if(!modal) return;
+        modal.classList.add("hide");
+        modal.setAttribute("aria-hidden", "true");
+      }
 
       function splat(x,y){
         var el = document.createElement("div");
@@ -1212,9 +1435,9 @@
 
       function updateHud(){
         lifeEl.textContent = hp;
-        remainEl.textContent = level === 3 ? kingShield : remaining;
+        remainEl.textContent = level === 3 ? kingShield : (level === 2 ? angryRemaining : remaining);
         scoreEl.textContent = score;
-        modeEl.textContent = level === 3 ? "护盾" : "蚊子";
+        modeEl.textContent = level === 3 ? "护盾" : (level === 2 ? "愤怒" : "蚊子");
         updateHearts();
       }
 
@@ -1232,6 +1455,19 @@
         healthbarEl.classList.remove("hit");
         void healthbarEl.offsetWidth;
         healthbarEl.classList.add("hit");
+      }
+
+      function vibrate(kind){
+        try{
+          if(!navigator.vibrate) return;
+          var patterns = {
+            swat: 12,
+            hit: [16, 22, 18],
+            hurt: [32, 28, 42],
+            combo: [18, 22, 18, 22, 26]
+          };
+          navigator.vibrate(patterns[kind] || 10);
+        }catch(error){}
       }
 
       function tone(freq,dur,type,vol,when){
@@ -1309,6 +1545,32 @@
         swatter.classList.add("swat");
       }
 
+      function shareText(){
+        return "我在《叮了个包》挑战好友榜：先拍蚊子，再清愤怒蚊。你能不被叮满 10 个包吗？";
+      }
+      function shareGame(){
+        if(shareStatus) shareStatus.textContent = "";
+        if(navigator.share){
+          navigator.share({title:"叮了个包", text:shareText()}).catch(function(){
+            openModal(shareModal);
+          });
+          return;
+        }
+        openModal(shareModal);
+      }
+      function copyShareText(){
+        var text = shareText();
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(function(){
+            if(shareStatus) shareStatus.textContent = "分享文案已复制";
+          }).catch(function(){
+            if(shareStatus) shareStatus.textContent = text;
+          });
+        }else if(shareStatus){
+          shareStatus.textContent = text;
+        }
+      }
+
       document.addEventListener("pointermove", function(evt){
         moveSwatter(evt.clientX, evt.clientY);
       });
@@ -1316,6 +1578,7 @@
       arena.addEventListener("pointerdown", function(evt){
         moveSwatter(evt.clientX, evt.clientY);
         swat();
+        vibrate("swat");
         if(!running) return;
         evt.preventDefault();
         var rect = app.getBoundingClientRect();
@@ -1337,6 +1600,13 @@
         }
       });
 
+      rankBtn.addEventListener("click", function(){ openModal(rankModal); });
+      shareBtn.addEventListener("click", function(){ openModal(shareModal); });
+      rankCloseBtn.addEventListener("click", function(){ hideModal(rankModal); });
+      shareCloseBtn.addEventListener("click", function(){ hideModal(shareModal); });
+      nativeShareBtn.addEventListener("click", shareGame);
+      copyShareBtn.addEventListener("click", copyShareText);
+
       document.getElementById("startBtn").addEventListener("click", function(){
         try{
           if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1348,9 +1618,9 @@
 
       window.addEventListener("load", function(){
         try{
-          if(bestStartEl) bestStartEl.textContent = "最高纪录 " + highScore + " 分";
           buildHearts();
           updateHud();
+          animateStartScreen();
         }catch(error){
           console.error(error);
           document.body.innerHTML = "<div style='min-height:100vh;display:grid;place-items:center;background:#171631;color:white;font-family:sans-serif;text-align:center;padding:24px'><div><h2>启动失败</h2><p>请刷新再试。</p></div></div>";

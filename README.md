@@ -1,7 +1,7 @@
 # 叮了个包 🦟
 
 一个移动端优先的中文 H5 打蚊子小游戏（三关制：普通蚊 → 报仇局 → 蚊王终章）。
-纯原生 vanilla JS，**无框架、无依赖、无构建步骤**——整个游戏就一个 `index.html`。
+纯原生 vanilla JS，**无框架、无构建步骤**。游戏入口是 `index.html`，动效使用本地 `vendor/gsap.min.js`，不依赖 CDN。
 
 - 🎮 在线地址：<https://dinggebao.huangtangai.top>
 - 🛠 详细架构 / 数值说明见 [`CLAUDE.md`](./CLAUDE.md)
@@ -22,12 +22,23 @@ python -m http.server 8000
 
 > 调试请用浏览器的**移动端模拟视图**（窄屏竖屏），布局针对 430px 宽 + 安全区适配。
 
+## 自动检查
+
+```bash
+node tests/dinggebao-regression.test.mjs
+```
+
+这个脚本做轻量回归检查：开始页入口、首页背景图、排行榜/分享弹层、本地 GSAP、震动调用、第二关愤怒蚊目标统计与文案一致性。
+
 ---
 
 ## 项目结构
 
 ```
-index.html    ← 全部内容：HTML + CSS + JS(IIFE) 全内联，游戏逻辑在底部 <script>
+index.html    ← 游戏入口：HTML + CSS + JS(IIFE)，游戏逻辑在底部 <script>
+assets/       ← 首页背景图等静态素材，目前 `home-bg.png` 用作开始页整屏背景
+vendor/       ← 本地 GSAP 文件，离线加载，不走 CDN
+tests/        ← 轻量 Node 回归测试
 CLAUDE.md     ← 架构说明、状态机、平衡数值常量位置（改难度先看这里）
 README.md     ← 本文件
 ```
