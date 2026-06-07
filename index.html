@@ -527,25 +527,25 @@
       var LV1_COUNT = 8;          // 第一关蚊子数
       var MAX_HP = 10;            // 生命值
       var HIT_RADIUS = 54;        // 拍击判定半径
-      var LV2_START = 9;          // 第二关孵化初始蚊子
-      var LV2_START_REVENGE = 3;  // 其中反杀蚊子数
-      var SPAWN_BASE = 1300;      // 第二关繁衍间隔(ms)
-      var SPAWN_MIN = 520;        // 繁衍最快间隔
-      var MIN_REVENGE = 3;        // 场上反杀蚊低于此数时优先补充
-      var MOB_CAP = 38;           // 场上蚊子上限
+      var LV2_START = 13;         // 第二关孵化初始蚊子
+      var LV2_START_REVENGE = 5;  // 其中反杀蚊子数
+      var SPAWN_BASE = 900;       // 第二关繁衍间隔(ms)
+      var SPAWN_MIN = 330;        // 繁衍最快间隔
+      var MIN_REVENGE = 5;        // 场上反杀蚊低于此数时优先补充
+      var MOB_CAP = 50;           // 场上蚊子上限
       var BITE_DAMAGE = 1;        // 每次叮咬扣血
-      var BITE_COOLDOWN = 1400;   // 叮后退避时间(ms)
+      var BITE_COOLDOWN = 1000;   // 叮后退避时间(ms)
       // 第三关·蚊王
-      var KING_SHIELD = 16;       // 蚊王护盾层数（拍中一次破1层）
+      var KING_SHIELD = 26;       // 蚊王护盾层数（拍中一次破1层）
       var STANDOFF_TIME = 5000;   // 对峙抉择时间(ms)，期间不动手即和解
-      var GUARD_DAMAGE = 2;       // 护卫蚊叮咬扣血
-      var GUARD_COUNT = 3;        // 开场护卫数量
-      var KING_SPAWN_BASE = 820;  // 蚊王召唤间隔(ms)
-      var KING_SPAWN_MIN = 300;
-      var KING_DIVE_INTERVAL = 4200; // 蚊王亲自俯冲叮人的间隔(ms)
+      var GUARD_DAMAGE = 3;       // 护卫蚊叮咬扣血
+      var GUARD_COUNT = 4;        // 开场护卫数量
+      var KING_SPAWN_BASE = 560;  // 蚊王召唤间隔(ms)
+      var KING_SPAWN_MIN = 190;
+      var KING_DIVE_INTERVAL = 3200; // 蚊王亲自俯冲叮人的间隔(ms)
       var KING_DIVE_DAMAGE = 3;   // 蚊王俯冲扣血
-      var L3_MOB_CAP = 36;        // 第三关场上小蚊上限
-      var L3_REVENGE_RATE = 0.66; // 召唤出反杀蚊的概率
+      var L3_MOB_CAP = 48;        // 第三关场上小蚊上限
+      var L3_REVENGE_RATE = 0.78; // 召唤出反杀蚊的概率
 
       var mosquitoes = [];
       var mother = null;
@@ -658,7 +658,7 @@
         }
         if(level === 2 && hatched){
           lv2Elapsed += dt;
-          spawnInterval = Math.max(SPAWN_MIN, SPAWN_BASE - lv2Elapsed * 0.012);
+          spawnInterval = Math.max(SPAWN_MIN, SPAWN_BASE - lv2Elapsed * 0.02);
           spawnTimer -= dt;
           if(spawnTimer <= 0 && mosquitoes.length < MOB_CAP){
             spawnTimer = spawnInterval;
@@ -998,7 +998,7 @@
         }
         if(phase3 === "battle"){
           lv2Elapsed += dt;
-          spawnInterval = Math.max(KING_SPAWN_MIN, KING_SPAWN_BASE - lv2Elapsed * 0.01);
+          spawnInterval = Math.max(KING_SPAWN_MIN, KING_SPAWN_BASE - lv2Elapsed * 0.018);
           spawnTimer -= dt;
           if(spawnTimer <= 0 && mosquitoes.length < L3_MOB_CAP){
             spawnTimer = spawnInterval;
