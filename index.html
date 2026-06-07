@@ -297,11 +297,14 @@
       pointer-events:none;
     }
 
-    /* 母蚊子 */
-    .mosquito.mother{z-index:9;transform:translate(-50%,-50%) scale(1.9)}
-    .mosquito.mother:after{
-      content:"母体";left:50%;top:-12px;background:#8a62ff;border-color:#fff;
+    /* 母蚊子（愤怒形象，无标签） */
+    .mosquito.mother{
+      z-index:9;transform:translate(-50%,-50%) scale(1.9);
+      filter:drop-shadow(0 0 14px rgba(255,64,88,.85)) drop-shadow(0 6px 0 rgba(42,22,48,.16));
     }
+    .mosquito.mother .body{background:repeating-linear-gradient(115deg,#b81d33 0 5px,#ff5168 5px 10px)}
+    .mosquito.mother .head{background:#b81d33}
+    .mosquito.mother:after{content:none}
     .mosquito.mother.hatch{animation:hatchpulse .5s ease 3}
     @keyframes hatchpulse{
       0%,100%{transform:translate(-50%,-50%) scale(1.9)}
@@ -488,7 +491,7 @@
       border:6px solid white;background:linear-gradient(180deg,#fff8dc,#ffd765);color:#3c2440;
       box-shadow:0 13px 0 #9b6338,0 28px 46px rgba(35,22,54,.35),inset 0 5px rgba(255,255,255,.76);
     }
-    h1{margin:0;font-size:46px;line-height:.98;color:#ff4058;text-shadow:0 4px #fff,0 8px #a72b3d}
+    h1{margin:0;font-size:46px;line-height:.98;color:#ff4058;text-shadow:none}
     #resultTitle{text-shadow:none;letter-spacing:.02em}
     .panel p{margin:14px auto 17px;max-width:280px;font-size:16px;line-height:1.55;color:#654162}
     .btn{
@@ -547,15 +550,15 @@
     .share-status{min-height:18px;margin-top:10px;text-align:center;color:#7c4a1a;font-size:13px;font-weight:900}
 
     .between{
-      position:absolute;z-index:50;left:50%;top:42%;transform:translate(-50%,-50%) scale(.82);
-      width:min(330px,90%);padding:18px;border-radius:24px;border:6px solid white;
+      position:absolute;z-index:50;left:50%;top:calc(96px + var(--safe-top));
+      transform:translate(-50%,-18px) scale(.9);
+      width:min(322px,88%);padding:13px 18px;border-radius:22px;border:5px solid white;
       background:linear-gradient(180deg,#8a62ff,#4e7dff);text-align:center;
-      box-shadow:0 12px 0 #3047a8,0 24px 44px rgba(35,22,54,.32);
-      opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;
-    }
-    .between.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-    .between b{display:block;font-size:31px;text-shadow:0 4px rgba(0,0,0,.25)}
-    .between span{display:block;margin-top:6px;font-size:15px;color:#e9e6ff}
+      box-shadow:0 9px 0 #3047a8,0 18px 34px rgba(35,22,54,.3);
+      opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s cubic-bezier(.34,1.4,.5,1)}
+    .between.show{opacity:1;transform:translate(-50%,0) scale(1)}
+    .between b{display:block;font-size:27px;text-shadow:none}
+    .between span{display:block;margin-top:5px;font-size:14px;color:#e9e6ff}
 
     @media (prefers-reduced-motion: reduce){
       *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
