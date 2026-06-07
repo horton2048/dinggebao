@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
   <title>叮了个包</title>
   <style>
     :root{
@@ -39,6 +39,7 @@
       margin:0 auto;
       overflow:hidden;
       cursor:none;
+      touch-action:none;
       background:
         radial-gradient(circle at 18% 18%,rgba(255,225,90,.42),transparent 20%),
         radial-gradient(circle at 86% 10%,rgba(95,212,255,.34),transparent 24%),
@@ -119,7 +120,7 @@
     #app.playing .exit-btn{display:flex}
     .exit-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.45),0 8px 14px rgba(42,22,48,.18)}
 
-    .arena{position:absolute;inset:0;overflow:hidden}
+    .arena{position:absolute;inset:0;overflow:hidden;touch-action:none}
     .sun{
       position:absolute;right:-42px;top:74px;width:150px;height:150px;
       border-radius:50%;background:#ffe973;border:10px solid rgba(255,255,255,.72);
@@ -1683,6 +1684,27 @@
           shareStatus.textContent = text;
         }
       }
+
+      // ===== 彻底禁止浏览器缩放（高强度连点会被识别为双击缩放，iOS 上 viewport/touch-action 都拦不住）=====
+      // 1) 双指捏合缩放：多指触摸直接拦截
+      document.addEventListener("touchstart", function(evt){
+        if(evt.touches.length > 1){ evt.preventDefault(); }
+      }, {passive:false});
+      document.addEventListener("touchmove", function(evt){
+        if(evt.touches.length > 1){ evt.preventDefault(); }
+      }, {passive:false});
+      // 2) 双击缩放：350ms 内的第二次触摸结束直接吃掉默认行为
+      var lastTouchEnd = 0;
+      document.addEventListener("touchend", function(evt){
+        var now = evt.timeStamp || 0;
+        if(now - lastTouchEnd <= 350){ evt.preventDefault(); }
+        lastTouchEnd = now;
+      }, {passive:false});
+      // 3) iOS Safari 专有捏合手势事件 + 双击事件
+      ["gesturestart","gesturechange","gestureend"].forEach(function(t){
+        document.addEventListener(t, function(evt){ evt.preventDefault(); }, {passive:false});
+      });
+      document.addEventListener("dblclick", function(evt){ evt.preventDefault(); }, {passive:false});
 
       document.addEventListener("pointermove", function(evt){
         moveSwatter(evt.clientX, evt.clientY);
