@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <title>叮了个包</title>
+  <style>
+    :root{
+      --ink:#2a1630;
+      --paper:#fff4c8;
+      --red:#ff4058;
+      --yellow:#ffe15a;
+      --green:#5cff86;
+      --blue:#5fd4ff;
+      --purple:#8a62ff;
+      --skin:#ffcd9b;
+      --skin-d:#e9a86f;
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-bottom:env(safe-area-inset-bottom,0px);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:#171631;
+      font-family:"Arial Rounded MT Bold","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+      color:white;
+      user-select:none;
+      touch-action:none;
+    }
+    button{font:inherit;border:0;color:inherit;cursor:pointer}
+    #app{
+      position:relative;
+      width:min(430px,100vw);
+      height:100vh;
+      height:100dvh;
+      margin:0 auto;
+      overflow:hidden;
+      cursor:none;
+      background:
+        radial-gradient(circle at 18% 18%,rgba(255,225,90,.42),transparent 20%),
+        radial-gradient(circle at 86% 10%,rgba(95,212,255,.34),transparent 24%),
+        linear-gradient(180deg,#5cc5ff 0%,#a9ebff 44%,#cfefff 60%);
+    }
+    #app:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.09) 1px,transparent 1px);
+      background-size:28px 28px;
+      opacity:.25;
+      pointer-events:none;
+    }
+    #app.shake{animation:shake .16s linear}
+    @keyframes shake{
+      0%,100%{transform:translate(0,0)}
+      25%{transform:translate(5px,-4px)}
+      50%{transform:translate(-5px,4px)}
+      75%{transform:translate(4px,3px)}
+    }
+    #app.hurt:after{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:55;
+      pointer-events:none;
+      background:radial-gradient(circle at 50% 80%,transparent 40%,rgba(255,0,40,.5));
+      animation:hurt .4s ease-out forwards;
+    }
+    @keyframes hurt{from{opacity:1}to{opacity:0}}
+
+    .hud{
+      position:absolute;
+      z-index:20;
+      left:12px;
+      right:12px;
+      top:calc(12px + var(--safe-top));
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+      pointer-events:none;
+    }
+    .pill{
+      min-width:84px;
+      padding:7px 10px 8px;
+      border:4px solid white;
+      border-radius:18px;
+      background:linear-gradient(180deg,#ff5c69,#df334a);
+      color:white;
+      text-align:center;
+      box-shadow:0 6px 0 #9d2636,0 12px 24px rgba(42,22,48,.23),inset 0 3px rgba(255,255,255,.36);
+      text-shadow:0 3px 0 rgba(75,20,31,.28);
+    }
+    .pill small{display:block;font-size:10px;color:#ffe3c7;letter-spacing:.08em}
+    .pill b{display:block;font-size:24px;line-height:1}
+    .pill.blue{background:linear-gradient(180deg,#66dcff,#487bff);box-shadow:0 6px 0 #2d55b9,0 12px 24px rgba(42,22,48,.18),inset 0 3px rgba(255,255,255,.36)}
+    .pill.blue small{color:#dff4ff}
+    .pill.gold{background:linear-gradient(180deg,#ffe561,#ff9d28);color:#5e2d22;box-shadow:0 6px 0 #aa641d,0 12px 24px rgba(42,22,48,.18),inset 0 3px rgba(255,255,255,.48);text-shadow:none}
+    .pill.gold small{color:#7c4a1a}
+    .pill.shaketwist{animation:shake .2s linear}
+
+    .arena{position:absolute;inset:0;overflow:hidden}
+    .sun{
+      position:absolute;right:-42px;top:74px;width:150px;height:150px;
+      border-radius:50%;background:#ffe973;border:10px solid rgba(255,255,255,.72);
+      box-shadow:0 0 44px rgba(255,233,115,.6);
+    }
+    .cloud{
+      position:absolute;width:120px;height:40px;border-radius:999px;
+      background:rgba(255,255,255,.75);filter:drop-shadow(0 8px 0 rgba(70,130,180,.12));
+      animation:cloud 11s linear infinite;
+    }
+    .cloud:before,.cloud:after{content:"";position:absolute;bottom:0;border-radius:50%;background:inherit}
+    .cloud:before{left:20px;width:60px;height:60px}
+    .cloud:after{right:20px;width:46px;height:46px}
+    .cloud.a{left:-30px;top:120px}
+    .cloud.b{left:230px;top:190px;scale:.72;animation-duration:15s}
+    @keyframes cloud{to{transform:translateX(-130px)}}
+
+    /* 额头 / 大脑门 */
+    .forehead{
+      position:absolute;
+      left:-12%;
+      right:-12%;
+      bottom:0;
+      height:46%;
+      background:radial-gradient(120% 150% at 50% 120%,#ffe0bd 0%,var(--skin) 38%,var(--skin-d) 100%);
+      border-radius:50% 50% 0 0;
+      box-shadow:inset 0 14px rgba(255,255,255,.4),inset 0 -30px 40px rgba(150,90,40,.18);
+      z-index:3;
+    }
+    /* 被叮起的红包 */
+    .bump{
+      position:absolute;
+      z-index:5;
+      width:30px;height:30px;
+      transform:translate(-50%,-50%) scale(0);
+      border-radius:50%;
+      background:radial-gradient(circle at 38% 32%,#ff8a8a 0%,#ff4d5e 45%,#d62b46 100%);
+      box-shadow:0 3px 6px rgba(140,20,40,.4),inset 0 -3px 4px rgba(120,10,30,.5);
+      animation:bumpin .3s ease-out forwards;
+    }
+    .bump:after{content:"";position:absolute;left:30%;top:24%;width:8px;height:6px;border-radius:50%;background:rgba(255,255,255,.6)}
+    @keyframes bumpin{to{transform:translate(-50%,-50%) scale(1)}}
+
+    /* 连续血条 */
+    .healthbar{
+      position:absolute;z-index:7;left:30px;right:30px;
+      bottom:calc(20px + var(--safe-bottom));
+      height:26px;border-radius:999px;
+      background:rgba(40,15,25,.34);
+      border:3px solid #fff;
+      box-shadow:0 5px 0 rgba(120,20,40,.32),0 10px 18px rgba(42,22,48,.25),inset 0 -3px 6px rgba(0,0,0,.32);
+      overflow:hidden;pointer-events:none;
+    }
+    .healthbar .hpfill{
+      position:absolute;left:0;top:0;bottom:0;width:100%;
+      background:linear-gradient(90deg,#ff2d44,#ff6b78 55%,#ffa0a8);
+      box-shadow:inset 0 4px rgba(255,255,255,.42),inset 0 -5px 8px rgba(150,10,40,.4);
+      transition:width .38s cubic-bezier(.45,0,.25,1),background .3s ease;
+      border-radius:999px;
+    }
+    .healthbar.low .hpfill{
+      background:linear-gradient(90deg,#ff2030,#ff5560);
+      animation:hplow .7s ease-in-out infinite;
+    }
+    @keyframes hplow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.45)}}
+    .healthbar .hpheart{
+      position:absolute;left:8px;top:50%;width:18px;height:16px;z-index:2;
+      transform:translateY(-50%);
+      filter:drop-shadow(0 1px 1px rgba(120,10,30,.5));
+    }
+    .healthbar .hpheart:before,.healthbar .hpheart:after{
+      content:"";position:absolute;width:9px;height:13px;
+      border-radius:9px 9px 0 0;background:#fff;top:0;
+    }
+    .healthbar .hpheart:before{left:9px;transform:rotate(-45deg);transform-origin:0 100%}
+    .healthbar .hpheart:after{left:0;transform:rotate(45deg);transform-origin:100% 100%}
+    .healthbar .hpnum{
+      position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:2;
+      text-align:center;font-size:14px;font-weight:900;color:#fff;
+      text-shadow:0 1px 2px rgba(120,10,30,.95),0 0 4px rgba(120,10,30,.6);
+      letter-spacing:.04em;
+    }
+    .healthbar.hit{animation:hpshake .32s cubic-bezier(.36,.07,.19,.97)}
+    @keyframes hpshake{
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-5px)}
+      40%{transform:translateX(4px)}
+      60%{transform:translateX(-3px)}
+      80%{transform:translateX(2px)}
+    }
+    .healthbar.heal{animation:hpheal .4s ease}
+    @keyframes hpheal{0%,100%{filter:none}50%{filter:brightness(1.4) drop-shadow(0 0 8px rgba(120,255,150,.8))}}
+
+    /* 蚊子 */
+    .mosquito{
+      position:absolute;z-index:8;width:62px;height:54px;
+      transform:translate(-50%,-50%);
+      will-change:transform,left,top;
+      filter:drop-shadow(0 6px 0 rgba(42,22,48,.16));
+    }
+    .mosquito .wing{
+      position:absolute;top:2px;width:30px;height:24px;border-radius:52% 52% 44% 50%;
+      background:rgba(206,240,255,.66);border:2px solid rgba(255,255,255,.9);
+      animation:wing .1s infinite alternate ease-in-out;
+    }
+    .mosquito .wing.left{left:2px;transform-origin:right bottom;transform:rotate(-32deg)}
+    .mosquito .wing.right{right:2px;transform-origin:left bottom;transform:rotate(32deg);animation-delay:.05s}
+    @keyframes wing{from{scale:1 .82}to{scale:.78 1.2}}
+    .mosquito .body{
+      position:absolute;left:50%;top:20px;width:22px;height:24px;
+      transform:translateX(-50%);border-radius:50% 50% 46% 46%;
+      background:repeating-linear-gradient(115deg,#3a2348 0 5px,#6b4a86 5px 10px);
+      border:2px solid #2a1630;z-index:2;
+    }
+    .mosquito .head{
+      position:absolute;left:50%;top:14px;width:15px;height:15px;
+      transform:translateX(-50%);border-radius:50%;
+      background:#3a2348;border:2px solid #2a1630;z-index:3;
+    }
+    .mosquito .head:before,.mosquito .head:after{
+      content:"";position:absolute;top:3px;width:4px;height:4px;border-radius:50%;background:#ff5c69;
+    }
+    .mosquito .head:before{left:2px}
+    .mosquito .head:after{right:2px}
+    .mosquito .proboscis{
+      position:absolute;left:50%;top:24px;width:0;height:0;transform:translateX(-50%);
+      border-left:3px solid transparent;border-right:3px solid transparent;
+      border-top:12px solid #2a1630;z-index:1;
+    }
+    /* 尾部尖刺（区分苍蝇） */
+    .mosquito .stinger{
+      position:absolute;left:50%;top:42px;width:0;height:0;transform:translateX(-50%);
+      border-left:5px solid transparent;border-right:5px solid transparent;
+      border-top:16px solid #2a1630;z-index:1;
+    }
+    .mosquito.revenge .stinger{border-top-color:#b81d33}
+    .mosquito .legs:before,.mosquito .legs:after{
+      content:"";position:absolute;top:24px;width:18px;height:14px;
+      border:2px solid #2a1630;border-top:0;border-radius:0 0 9px 9px;opacity:.7;
+    }
+    .mosquito .legs:before{left:6px;transform:rotate(12deg)}
+    .mosquito .legs:after{right:6px;transform:rotate(-12deg)}
+
+    /* 反杀蚊子（会叮人） */
+    .mosquito.revenge .body{background:repeating-linear-gradient(115deg,#b81d33 0 5px,#ff5168 5px 10px)}
+    .mosquito.revenge .head{background:#b81d33}
+    .mosquito.revenge{filter:drop-shadow(0 0 14px rgba(255,64,88,.85)) drop-shadow(0 6px 0 rgba(42,22,48,.16));animation:angry .3s infinite alternate}
+    @keyframes angry{to{transform:translate(-50%,-50%) rotate(-6deg) scale(1.05)}}
+    .mosquito.revenge:after{
+      content:"反杀";position:absolute;left:50%;top:-16px;transform:translateX(-50%);
+      padding:1px 6px;border-radius:999px;background:var(--red);color:white;font-size:12px;
+      border:2px solid white;white-space:nowrap;font-weight:900;
+    }
+    .mosquito.gorged .body{filter:brightness(1.15) saturate(1.2)}
+
+    /* 坠落 */
+    .mosquito.falling{
+      transition:transform .5s cubic-bezier(.4,.1,.7,1),opacity .5s ease;
+      pointer-events:none;
+    }
+
+    /* 母蚊子 */
+    .mosquito.mother{z-index:9;transform:translate(-50%,-50%) scale(1.9)}
+    .mosquito.mother:after{
+      content:"母体";left:50%;top:-12px;background:#8a62ff;border-color:#fff;
+    }
+    .mosquito.mother.hatch{animation:hatchpulse .5s ease 3}
+    @keyframes hatchpulse{
+      0%,100%{transform:translate(-50%,-50%) scale(1.9)}
+      50%{transform:translate(-50%,-50%) scale(2.45)}
+    }
+
+    /* 蚊王 */
+    .mosquito.king{z-index:10;transform:translate(-50%,-50%) scale(2.2)}
+    .mosquito.king .body{background:repeating-linear-gradient(115deg,#5a2a86 0 5px,#9a5ad0 5px 10px)}
+    .mosquito.king .crown{
+      position:absolute;left:50%;top:-13px;transform:translateX(-50%);
+      width:36px;height:18px;z-index:5;
+      background:linear-gradient(180deg,#ffe775,#ffae29);
+      filter:drop-shadow(0 2px 1px rgba(150,90,10,.5));
+      clip-path:polygon(0 100%,0 38%,17% 72%,34% 0,50% 52%,66% 0,83% 72%,100% 38%,100% 100%);
+    }
+    .mosquito.king .crown:after{content:"";position:absolute;left:50%;bottom:1px;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:#ff4d5e;box-shadow:-11px 0 0 #4fd4ff,11px 0 0 #4fd4ff}
+    .mosquito.king.shielded{filter:drop-shadow(0 0 12px rgba(120,180,255,.9)) drop-shadow(0 6px 0 rgba(42,22,48,.16))}
+    .mosquito.king.shieldhit{animation:shieldhit .2s ease}
+    @keyframes shieldhit{0%,100%{filter:none}50%{filter:brightness(2) drop-shadow(0 0 16px #aee0ff)}}
+    .mosquito.king.enraged .crown{filter:drop-shadow(0 0 8px rgba(255,64,88,.9))}
+    /* 蚊王护盾环 */
+    .shieldring{
+      position:absolute;left:50%;top:52%;width:78px;height:78px;
+      transform:translate(-50%,-50%);border-radius:50%;
+      border:3px solid rgba(150,205,255,.9);
+      background:radial-gradient(circle,transparent 56%,rgba(120,185,255,.16) 72%,rgba(120,185,255,.34) 100%);
+      box-shadow:0 0 18px rgba(120,185,255,.75),inset 0 0 14px rgba(150,205,255,.6);
+      animation:shieldspin 6s linear infinite;
+      pointer-events:none;z-index:0;
+    }
+    .shieldring:before{
+      content:"";position:absolute;inset:5px;border-radius:50%;
+      border:2px dashed rgba(190,225,255,.55);
+    }
+    @keyframes shieldspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+    .shieldnum{
+      position:absolute;left:50%;top:-15px;transform:translate(-50%,-50%);
+      min-width:22px;padding:1px 5px;border-radius:999px;z-index:6;
+      background:linear-gradient(180deg,#7cc4ff,#3f86ff);border:2px solid #fff;
+      color:#fff;font-size:11px;font-weight:900;text-align:center;white-space:nowrap;
+      box-shadow:0 2px 5px rgba(30,60,140,.5);
+    }
+    /* 盾层越低越红 */
+    .shieldring.weak{
+      border-color:rgba(255,160,90,.9);
+      background:radial-gradient(circle,transparent 56%,rgba(255,150,80,.18) 72%,rgba(255,120,60,.36) 100%);
+      box-shadow:0 0 18px rgba(255,140,70,.8),inset 0 0 14px rgba(255,170,100,.6);
+    }
+    .shieldring.weak .shieldnum,.mosquito.king .shieldnum.weak{background:linear-gradient(180deg,#ffb14d,#ff7a2a)}
+    .mosquito.king.shieldhit .shieldring{animation:shieldcrack .22s ease}
+    @keyframes shieldcrack{0%,100%{filter:none;opacity:1}45%{filter:brightness(2.2);opacity:.55;transform:translate(-50%,-50%) scale(1.18)}}
+
+    /* 护卫蚊（绿头，扣2血） */
+    .mosquito.guard .head{background:#28a83f}
+    .mosquito.guard .head:before,.mosquito.guard .head:after{background:#ffe15a}
+    .mosquito.guard .body{background:repeating-linear-gradient(115deg,#1f7a30 0 5px,#46c45e 5px 10px)}
+    .mosquito.guard .stinger{border-top-color:#1f7a30}
+    .mosquito.guard{filter:drop-shadow(0 0 12px rgba(70,200,90,.8)) drop-shadow(0 6px 0 rgba(42,22,48,.16))}
+    .mosquito.guard:after{
+      content:"护卫";position:absolute;left:50%;top:-16px;transform:translateX(-50%);
+      padding:1px 6px;border-radius:999px;background:#1f9a36;color:white;font-size:12px;
+      border:2px solid white;white-space:nowrap;font-weight:900;
+    }
+
+    /* 蚊王头顶和平气泡 */
+    .peacebubble{
+      position:absolute;z-index:30;transform:translate(-50%,-120%);
+      padding:6px 12px;border-radius:14px;background:white;color:#3c2440;
+      font-size:15px;font-weight:900;white-space:nowrap;pointer-events:none;
+      box-shadow:0 6px 14px rgba(40,20,40,.3);opacity:0;transition:opacity .2s ease;
+    }
+    .peacebubble:after{content:"";position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);border:7px solid transparent;border-top-color:white;border-bottom:0}
+    .peacebubble.show{opacity:1}
+    .peacebubble b{color:#ff4058}
+
+    /* 拍子光标 */
+    .swatter{
+      position:fixed;z-index:80;left:0;top:0;width:84px;height:138px;
+      transform:translate(-50%,-30px);
+      transform-origin:50% 30px;
+      pointer-events:none;will-change:transform,left,top;
+    }
+    .swatter .net{
+      position:absolute;left:50%;top:0;width:68px;height:68px;border-radius:50%;
+      transform:translateX(-50%);
+      border:6px solid #2f3a86;
+      background:
+        repeating-linear-gradient(0deg,rgba(80,100,210,.55) 0 2px,transparent 2px 9px),
+        repeating-linear-gradient(90deg,rgba(80,100,210,.55) 0 2px,transparent 2px 9px),
+        radial-gradient(circle,rgba(120,160,255,.25),rgba(90,120,230,.1));
+      box-shadow:0 4px 10px rgba(30,30,80,.35),inset 0 0 0 3px rgba(255,255,255,.25);
+    }
+    /* 网与柄之间的连接颈 */
+    .swatter .net:after{
+      content:"";position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);
+      width:16px;height:18px;border-radius:0 0 6px 6px;
+      background:linear-gradient(180deg,#2f3a86,#3a47a0);
+    }
+    .swatter .handle{
+      position:absolute;left:50%;top:62px;width:15px;height:74px;border-radius:8px;
+      transform:translateX(-50%);
+      background:linear-gradient(90deg,#ffd75a,#f0a52a 55%,#d98c1c);
+      border:3px solid #a9661a;
+      box-shadow:0 3px 6px rgba(120,70,10,.35),inset 2px 0 rgba(255,255,255,.45);
+    }
+    .swatter.swat{animation:swat .22s ease-out}
+    @keyframes swat{
+      0%{transform:translate(-50%,-30px) rotate(0) scale(1)}
+      35%{transform:translate(-50%,-30px) rotate(-26deg) scale(.82)}
+      100%{transform:translate(-50%,-30px) rotate(0) scale(1)}
+    }
+
+    .float{
+      position:absolute;z-index:30;left:0;top:0;transform:translate(-50%,-50%);
+      color:white;font-size:22px;font-weight:900;
+      text-shadow:0 4px #a3263a,0 9px 20px rgba(42,22,48,.3);
+      pointer-events:none;animation:float .72s ease-out forwards;white-space:nowrap;
+    }
+    @keyframes float{
+      0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(-8deg)}
+      20%{opacity:1;transform:translate(-50%,-70%) scale(1.18) rotate(4deg)}
+      100%{opacity:0;transform:translate(-50%,-148%) scale(.85) rotate(-5deg)}
+    }
+    .splat{
+      position:absolute;z-index:25;width:70px;height:70px;border-radius:50%;
+      border:7px solid white;
+      background:radial-gradient(circle,#ff4058 0 34%,rgba(255,64,88,.22) 35% 64%,transparent 65%);
+      transform:translate(-50%,-50%) scale(.35);pointer-events:none;
+      animation:splat .28s ease-out forwards;
+    }
+    @keyframes splat{to{opacity:0;transform:translate(-50%,-50%) scale(1.35)}}
+
+    .combo{
+      position:absolute;z-index:24;left:50%;top:120px;
+      transform:translateX(-50%) scale(.6);text-align:center;
+      pointer-events:none;opacity:0;transition:opacity .14s ease,transform .14s ease;
+    }
+    .combo.show{opacity:1;transform:translateX(-50%) scale(1)}
+    .combo b{display:block;font-size:50px;line-height:1;color:var(--yellow);text-shadow:0 4px #c2371f,0 0 20px rgba(255,225,90,.75)}
+    .combo small{display:block;font-size:15px;font-weight:900;color:white;letter-spacing:.2em;text-shadow:0 2px #a3263a}
+    .combo.hot b{color:var(--red);text-shadow:0 4px #fff,0 0 22px rgba(255,64,88,.85)}
+    .combo.pop{animation:combopop .3s ease}
+    @keyframes combopop{0%{transform:translateX(-50%) scale(1)}42%{transform:translateX(-50%) scale(1.34)}100%{transform:translateX(-50%) scale(1)}}
+
+    .screen{
+      position:absolute;z-index:60;inset:0;display:grid;place-items:center;padding:22px;
+      background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(31,22,54,.36));
+      transition:opacity .2s ease,transform .2s ease;
+    }
+    .screen.hide{opacity:0;pointer-events:none;transform:scale(1.04)}
+    .panel{
+      width:min(346px,100%);text-align:center;padding:24px 18px 18px;border-radius:28px;
+      border:6px solid white;background:linear-gradient(180deg,#fff8dc,#ffd765);color:#3c2440;
+      box-shadow:0 13px 0 #9b6338,0 28px 46px rgba(35,22,54,.35),inset 0 5px rgba(255,255,255,.76);
+    }
+    h1{margin:0;font-size:46px;line-height:.98;color:#ff4058;text-shadow:0 4px #fff,0 8px #a72b3d}
+    #resultTitle{text-shadow:none;letter-spacing:.02em}
+    .panel p{margin:14px auto 17px;max-width:280px;font-size:16px;line-height:1.55;color:#654162}
+    .btn{
+      width:100%;min-height:68px;border-radius:23px;border:5px solid white;
+      background:linear-gradient(180deg,#ff656e,#e3334a);color:white;font-size:31px;font-weight:900;
+      text-shadow:0 4px 0 #9e2636;box-shadow:0 8px 0 #9e2636,0 15px 24px rgba(58,27,45,.25),inset 0 4px rgba(255,255,255,.36);
+    }
+    .btn:active{transform:translateY(5px);box-shadow:0 3px 0 #9e2636,0 8px 16px rgba(58,27,45,.18)}
+    .mini-rank{margin-top:12px;padding:9px 10px;border-radius:16px;background:rgba(255,255,255,.46);color:#5a3655;font-size:14px;font-weight:900}
+
+    .between{
+      position:absolute;z-index:50;left:50%;top:42%;transform:translate(-50%,-50%) scale(.82);
+      width:min(330px,90%);padding:18px;border-radius:24px;border:6px solid white;
+      background:linear-gradient(180deg,#8a62ff,#4e7dff);text-align:center;
+      box-shadow:0 12px 0 #3047a8,0 24px 44px rgba(35,22,54,.32);
+      opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;
+    }
+    .between.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    .between b{display:block;font-size:31px;text-shadow:0 4px rgba(0,0,0,.25)}
+    .between span{display:block;margin-top:6px;font-size:15px;color:#e9e6ff}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="arena" id="arena">
+      <div class="sun"></div>
+      <div class="cloud a"></div>
+      <div class="cloud b"></div>
+      <div class="forehead" id="forehead"></div>
+      <div class="healthbar" id="healthbar">
+        <div class="hpfill" id="hpfill"></div>
+        <div class="hpheart"></div>
+        <div class="hpnum" id="hpnum">10</div>
+      </div>
+    </div>
+
+    <div class="hud">
+      <div class="pill"><small>生命</small><b id="life">10</b></div>
+      <div class="pill blue"><small id="mode">蚊子</small><b id="remain">8</b></div>
+      <div class="pill gold"><small>拍死</small><b id="score">0</b></div>
+    </div>
+
+    <div class="combo" id="combo"><b>2</b><small>连击</small></div>
+    <div class="between" id="between"><b>第2关</b><span>它们记住你了。</span></div>
+    <div class="peacebubble" id="peacebubble">它似乎在等你的决定… <b>(别动手?)</b></div>
+
+    <section class="screen" id="start">
+      <div class="panel">
+        <h1>叮了个包</h1>
+        <p>第1关：把蚊子全拍下来。<br>第2关：母蚊子孵了一窝来报仇——专打红色「反杀」蚊，别让它们叮满你 10 个包。</p>
+        <div class="mini-rank" id="bestStart" style="margin-bottom:14px">最高纪录 0 分</div>
+        <button class="btn" id="startBtn" type="button">开拍</button>
+      </div>
+    </section>
+
+    <section class="screen hide" id="result">
+      <div class="panel">
+        <h1 id="resultTitle">结算</h1>
+        <p id="resultText"></p>
+        <div class="mini-rank" id="rank"></div>
+        <button class="btn" id="againBtn" type="button">再来</button>
+      </div>
+    </section>
+
+    <div class="swatter" id="swatter">
+      <div class="net"></div>
+      <div class="handle"></div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      var app = document.getElementById("app");
+      var arena = document.getElementById("arena");
+      var forehead = document.getElementById("forehead");
+      var swatter = document.getElementById("swatter");
+      var startScreen = document.getElementById("start");
+      var resultScreen = document.getElementById("result");
+      var between = document.getElementById("between");
+      var lifeEl = document.getElementById("life");
+      var remainEl = document.getElementById("remain");
+      var scoreEl = document.getElementById("score");
+      var modeEl = document.getElementById("mode");
+      var comboEl = document.getElementById("combo");
+      var healthbarEl = document.getElementById("healthbar");
+      var hpfillEl = document.getElementById("hpfill");
+      var hpnumEl = document.getElementById("hpnum");
+      var peacebubbleEl = document.getElementById("peacebubble");
+      var resultTitle = document.getElementById("resultTitle");
+      var resultText = document.getElementById("resultText");
+      var rankEl = document.getElementById("rank");
+      var bestStartEl = document.getElementById("bestStart");
+
+      // 配置
+      var LV1_COUNT = 8;          // 第一关蚊子数
+      var MAX_HP = 10;            // 生命值
+      var HIT_RADIUS = 54;        // 拍击判定半径
+      var LV2_START = 9;          // 第二关孵化初始蚊子
+      var LV2_START_REVENGE = 3;  // 其中反杀蚊子数
+      var SPAWN_BASE = 1300;      // 第二关繁衍间隔(ms)
+      var SPAWN_MIN = 520;        // 繁衍最快间隔
+      var MIN_REVENGE = 3;        // 场上反杀蚊低于此数时优先补充
+      var MOB_CAP = 38;           // 场上蚊子上限
+      var BITE_DAMAGE = 1;        // 每次叮咬扣血
+      var BITE_COOLDOWN = 1400;   // 叮后退避时间(ms)
+      // 第三关·蚊王
+      var KING_SHIELD = 16;       // 蚊王护盾层数（拍中一次破1层）
+      var STANDOFF_TIME = 5000;   // 对峙抉择时间(ms)，期间不动手即和解
+      var GUARD_DAMAGE = 2;       // 护卫蚊叮咬扣血
+      var GUARD_COUNT = 3;        // 开场护卫数量
+      var KING_SPAWN_BASE = 820;  // 蚊王召唤间隔(ms)
+      var KING_SPAWN_MIN = 300;
+      var KING_DIVE_INTERVAL = 4200; // 蚊王亲自俯冲叮人的间隔(ms)
+      var KING_DIVE_DAMAGE = 3;   // 蚊王俯冲扣血
+      var L3_MOB_CAP = 36;        // 第三关场上小蚊上限
+      var L3_REVENGE_RATE = 0.66; // 召唤出反杀蚊的概率
+
+      var mosquitoes = [];
+      var mother = null;
+      var king = null;
+      var kingShield = 0;
+      var phase3 = "";            // standoff | battle
+      var standoffTimer = 0;
+      var kingDiveTimer = 0;
+      var hp = MAX_HP;
+      var level = 1;
+      var remaining = 0;
+      var score = 0;
+      var running = false;
+      var hatched = false;
+      var last = 0;
+      var raf = 0;
+      var spawnTimer = 0;
+      var spawnInterval = SPAWN_BASE;
+      var lv2Elapsed = 0;
+      var lastTap = {x:0,y:0};
+      var combo = 0;
+      var comboTimer = 0;
+      var bestCombo = 0;
+      var audioCtx = null;
+      var highScore = 0;
+      try{ highScore = parseInt(localStorage.getItem("dinggebao_best"),10) || 0; }catch(error){}
+
+      var deathLines = ["啪!","叮死你","拍扁","碎!","得手"];
+      var enrageLines = ["拍错了!","激怒了","它记仇了","变敌"];
+      var biteLines = ["叮!","痒!","痛","起包了","可恶"];
+
+      function biteY(){ return app.clientHeight - app.clientHeight * 0.40; }
+      function airTop(){ return 116; }
+      function airBottom(){ return biteY() - 30; }
+
+      function start(){
+        clearAll();
+        hp = MAX_HP;
+        level = 1;
+        score = 0;
+        combo = 0;
+        comboTimer = 0;
+        bestCombo = 0;
+        hatched = false;
+        king = null;
+        kingShield = 0;
+        phase3 = "";
+        standoffTimer = 0;
+        hidePeace();
+        running = true;
+        last = 0;
+        lv2Elapsed = 0;
+        spawnInterval = SPAWN_BASE;
+        spawnTimer = SPAWN_BASE;
+        hideCombo();
+        buildHearts();
+        app.classList.remove("hurt");
+        startScreen.classList.add("hide");
+        resultScreen.classList.add("hide");
+        remaining = LV1_COUNT;
+        for(var i=0;i<LV1_COUNT;i++){
+          spawnMosquito(rand(54,app.clientWidth-54),rand(airTop(),airBottom()),"normal");
+        }
+        updateHud();
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(loop);
+      }
+
+      function clearAll(){
+        mosquitoes.forEach(function(m){ m.el.remove(); });
+        mosquitoes = [];
+        mother = null;
+        king = null;
+        var bumps = forehead.querySelectorAll(".bump");
+        for(var i=0;i<bumps.length;i++) bumps[i].remove();
+      }
+
+      function spawnMosquito(x,y,type){
+        var el = document.createElement("div");
+        el.className = "mosquito" + (type === "revenge" ? " revenge" : "");
+        el.innerHTML = '<div class="wing left"></div><div class="wing right"></div>' +
+          '<div class="legs"></div><div class="head"></div><div class="body"></div>' +
+          '<div class="proboscis"></div><div class="stinger"></div>';
+        arena.appendChild(el);
+        var m = {
+          el:el,
+          x:clamp(x,40,app.clientWidth-40),
+          y:clamp(y,airTop(),airBottom()),
+          vx:rand(-1.1,1.1),
+          vy:rand(-1.1,1.1),
+          type:type || "normal",
+          age:0,
+          immune:0,
+          state:"air",      // air | dive | bite | retreat
+          biteCd:0,
+          alive:true
+        };
+        mosquitoes.push(m);
+        renderMosquito(m);
+        return m;
+      }
+
+      function loop(t){
+        if(!running) return;
+        var dt = Math.min(34, t - (last || t));
+        last = t;
+        if(comboTimer > 0){
+          comboTimer -= dt;
+          if(comboTimer <= 0) breakCombo();
+        }
+        if(level === 2 && hatched){
+          lv2Elapsed += dt;
+          spawnInterval = Math.max(SPAWN_MIN, SPAWN_BASE - lv2Elapsed * 0.012);
+          spawnTimer -= dt;
+          if(spawnTimer <= 0 && mosquitoes.length < MOB_CAP){
+            spawnTimer = spawnInterval;
+            breedFromMother();
+          }
+          if(remaining <= 0){ startLevel3(); }
+        }
+        if(level === 3){
+          updateKing(dt);
+        }
+        updateMosquitoes(dt / 16.67, dt);
+        updateHud();
+        raf = requestAnimationFrame(loop);
+      }
+
+      function updateMosquitoes(step, dt){
+        var w = app.clientWidth, h = app.clientHeight;
+        var by = biteY();
+        mosquitoes.forEach(function(m){
+          if(!m.alive) return;
+          m.age += step;
+          if(m.immune > 0) m.immune -= step;
+          if(m.biteCd > 0) m.biteCd -= dt;
+
+          if(m.type === "king"){
+            if(m.state === "kingdive"){
+              // 蚊王亲自俯冲，又快又重
+              m.vx += ((w/2) - m.x) * 0.006 * step;
+              m.vy += 0.22 * step;
+              m.vy = clamp(m.vy, -4, 4.4);
+              m.x += m.vx * step; m.y += m.vy * step;
+              m.x = clamp(m.x, 70, w - 70);
+              if(m.y >= by){ m.y = by; kingBite(m); }
+              renderMosquito(m);
+              return;
+            }
+            if(m.state === "kingretreat"){
+              m.vy = -3.2;
+              m.y += m.vy * step;
+              m.x += Math.sin(m.age * 0.1) * 0.8 * step;
+              if(m.y <= airTop() + 90){ m.state = "air"; }
+              m.x = clamp(m.x, 70, w - 70);
+              renderMosquito(m);
+              return;
+            }
+            var ks = phase3 === "battle" ? 1.7 : 0.7;
+            m.vx += Math.sin(m.age * 0.03) * 0.04 * step;
+            m.vy += Math.cos(m.age * 0.045) * 0.03 * step;
+            m.vx = clamp(m.vx, -ks, ks);
+            m.vy = clamp(m.vy, -ks, ks);
+            m.x += m.vx * step; m.y += m.vy * step;
+            if(m.x < 70 || m.x > w - 70) m.vx *= -1;
+            if(m.y < airTop() + 6 || m.y > airTop() + 150) m.vy *= -1;
+            m.x = clamp(m.x, 70, w - 70);
+            m.y = clamp(m.y, airTop() + 6, airTop() + 150);
+            renderMosquito(m);
+            return;
+          }
+
+          var canBite = hatched && !(level === 3 && phase3 !== "battle");
+          if((m.type === "revenge" || m.type === "guard") && m.state === "air" && m.biteCd <= 0 && canBite){
+            m.state = "dive";
+          }
+
+          if(m.state === "dive"){
+            // 朝额头俯冲
+            m.vx += (0 - m.vx) * 0.04 * step;
+            m.vy += 0.16 * step;
+            m.vy = clamp(m.vy, -3, 3.4);
+            m.y += m.vy * step;
+            m.x += m.vx * step;
+            if(m.y >= by){
+              m.y = by;
+              biteForehead(m);
+            }
+          }else if(m.state === "retreat"){
+            m.vy = -2.4;
+            m.y += m.vy * step;
+            m.x += Math.sin(m.age * 0.1) * 0.6 * step;
+            if(m.y <= airBottom() - 30){
+              m.state = "air";
+            }
+          }else{
+            // 空中游走
+            m.vx += Math.sin((m.age + m.y) * 0.05) * 0.05 * step;
+            m.vy += Math.cos((m.age + m.x) * 0.04) * 0.05 * step;
+            var spd = level === 1 ? 1.2 : 1.7;
+            m.vx = clamp(m.vx, -spd, spd);
+            m.vy = clamp(m.vy, -spd, spd);
+            m.x += m.vx * step;
+            m.y += m.vy * step;
+            if(m.x < 40 || m.x > w - 40) m.vx *= -1;
+            if(m.y < airTop() || m.y > airBottom()) m.vy *= -1;
+            m.y = clamp(m.y, airTop(), airBottom());
+          }
+          m.x = clamp(m.x, 28, w - 28);
+          renderMosquito(m);
+        });
+      }
+
+      function renderMosquito(m){
+        var rot = Math.sin((m.age) * 0.12) * (m.state === "dive" ? 4 : 9);
+        m.el.style.left = m.x + "px";
+        m.el.style.top = m.y + "px";
+        if(!m.el.classList.contains("mother") && !m.el.classList.contains("king")){
+          m.el.style.transform = "translate(-50%,-50%) rotate(" + rot + "deg)";
+        }
+      }
+
+      function biteForehead(m){
+        if(!running) return;
+        var dmg = m.type === "guard" ? GUARD_DAMAGE : BITE_DAMAGE;
+        hp -= dmg;
+        if(hp < 0) hp = 0;
+        addBump(m.x);
+        if(dmg > 1) addBump(m.x + rand(-20, 20));
+        floatText(m.x, biteY() - 14, dmg > 1 ? "叮! -" + dmg : pick(biteLines));
+        m.state = "retreat";
+        m.biteCd = BITE_COOLDOWN;
+        m.el.classList.add("gorged");
+        hurtFlash();
+        healthHit();
+        biteSound(dmg);
+        updateHud();
+        if(hp <= 0){ lose(); }
+      }
+
+      function addBump(x){
+        var b = document.createElement("div");
+        b.className = "bump";
+        var frect = forehead.getBoundingClientRect();
+        var arect = arena.getBoundingClientRect();
+        var localX = clamp(x, 30, app.clientWidth - 30);
+        b.style.left = localX + "px";
+        b.style.top = rand(26, frect.height * 0.55) + "px";
+        forehead.appendChild(b);
+      }
+
+      function hitMosquito(m, clientX, clientY){
+        if(!running || !m.alive || m.immune > 0) return;
+        var rect = app.getBoundingClientRect();
+        lastTap.x = clientX - rect.left;
+        lastTap.y = clientY - rect.top;
+        splat(lastTap.x, lastTap.y);
+        shake();
+
+        // 第三关：拍到蚊王或护卫 → 立即开战
+        if(level === 3 && phase3 === "standoff" && (m.type === "king" || m.type === "guard")){
+          startBattle();
+        }
+
+        if(m.type === "king"){
+          hitKing();
+          return;
+        }
+
+        if(m.type === "guard"){
+          killMosquito(m);
+          combo += 1;
+          comboTimer = 1500;
+          if(combo > bestCombo) bestCombo = combo;
+          score += 2;
+          showCombo();
+          floatText(lastTap.x, lastTap.y, "护卫+2");
+          killSound();
+          updateHud();
+          return;
+        }
+
+        if(level >= 2 && m.type === "normal"){
+          // 误拍普通蚊子 → 激怒变反杀
+          enrage(m);
+          breakCombo();
+          floatText(lastTap.x, lastTap.y, pick(enrageLines));
+          enrageSound();
+          return;
+        }
+
+        // 击杀（第一关任意蚊子 / 反杀蚊子）
+        killMosquito(m);
+        combo += 1;
+        comboTimer = 1500;
+        if(combo > bestCombo) bestCombo = combo;
+        var mult = combo >= 12 ? 3 : combo >= 6 ? 2 : 1;
+        score += mult;
+        showCombo();
+        floatText(lastTap.x, lastTap.y, mult > 1 ? "+" + mult : pick(deathLines));
+        killSound();
+        if(combo === 6) comboSound(2);
+        else if(combo === 12) comboSound(3);
+        updateHud();
+      }
+
+      function enrage(m){
+        m.type = "revenge";
+        m.el.classList.add("revenge");
+        m.immune = 6;
+        m.biteCd = 600;
+        m.state = "air";
+      }
+
+      function killMosquito(m){
+        m.alive = false;
+        remaining = Math.max(0, remaining - 1);
+        var idx = mosquitoes.indexOf(m);
+        if(idx >= 0) mosquitoes.splice(idx, 1);
+        // 坠落动画
+        m.el.classList.add("falling");
+        m.el.classList.remove("revenge");
+        m.el.style.transform = "translate(-50%,-50%) translateY(" + (app.clientHeight - m.y) + "px) rotate(220deg)";
+        m.el.style.opacity = "0";
+        setTimeout(function(){ m.el.remove(); }, 520);
+
+        if(level === 1 && remaining <= 0){
+          endLevel1();
+        }
+      }
+
+      function endLevel1(){
+        // 在额头中央留下一只母蚊子
+        var mx = app.clientWidth / 2;
+        var my = biteY() - 6;
+        mother = spawnMosquito(mx, my, "normal");
+        mother.state = "idle";
+        mother.el.classList.add("mother");
+        mother.el.style.transform = "translate(-50%,-50%) scale(1.9)";
+        showBetween("它来报仇了", "母蚊子要孵化了…");
+        running = false;
+        cancelAnimationFrame(raf);
+        setTimeout(startLevel2, 1500);
+      }
+
+      function startLevel2(){
+        level = 2;
+        hideBetween();
+        if(mother){ mother.el.classList.add("hatch"); }
+        // 孵化一窝
+        var cx = mother ? mother.x : app.clientWidth / 2;
+        var cy = mother ? mother.y : biteY() - 40;
+        remaining = 0;
+        for(var i=0;i<LV2_START;i++){
+          var type = i < LV2_START_REVENGE ? "revenge" : "normal";
+          var m = spawnMosquito(cx + rand(-30,30), cy + rand(-30,10), type);
+          m.y = clamp(cy + rand(-40,-10), airTop(), airBottom());
+          m.vy = rand(-2.4,-1.2);
+          m.biteCd = rand(300, 1400);
+          remaining++;
+        }
+        // 母蚊子化为普通蚊子加入战斗
+        if(mother){
+          mother.el.classList.remove("mother","hatch");
+          mother.el.style.transform = "translate(-50%,-50%)";
+          mother.state = "air";
+          mother.y = clamp(cy - 30, airTop(), airBottom());
+          remaining++;
+          mother = null;
+        }
+        hatched = true;
+        running = true;
+        last = 0;
+        spawnTimer = spawnInterval;
+        updateHud();
+        raf = requestAnimationFrame(loop);
+      }
+
+      function breedFromMother(){
+        var cx = rand(60, app.clientWidth - 60);
+        var cy = airTop() + rand(0, 60);
+        var revengeOnField = 0;
+        for(var i=0;i<mosquitoes.length;i++){
+          if(mosquitoes[i].alive && mosquitoes[i].type === "revenge") revengeOnField++;
+        }
+        // 场上反杀蚊不足时优先补充，消除"没敌可打"的空窗
+        var type = (revengeOnField < MIN_REVENGE || Math.random() < 0.6) ? "revenge" : "normal";
+        var m = spawnMosquito(cx, cy, type);
+        m.vy = rand(0.4, 1.4);
+        m.biteCd = rand(150, 700);
+        remaining++;
+      }
+
+      // ===== 第三关·蚊王 =====
+      function startLevel3(){
+        level = 3;
+        phase3 = "standoff";
+        standoffTimer = STANDOFF_TIME;
+        kingShield = KING_SHIELD;
+        hatched = true;
+        remaining = 0;
+        modeEl.textContent = "蚊王";
+        // 清掉场上残留，确保对峙只有唯一蚊王 + 2 护卫
+        mosquitoes.forEach(function(m){ m.el.remove(); });
+        mosquitoes = [];
+        mother = null;
+        showBetween("蚊群女王降临", "戴王冠的那只……要不要动手？");
+        setTimeout(hideBetween, 1600);
+        var cx = app.clientWidth / 2;
+        var cy = airTop() + 60;
+        king = spawnMosquito(cx, cy, "king");
+        king.el.classList.add("king", "shielded");
+        var crown = document.createElement("div");
+        crown.className = "crown";
+        king.el.appendChild(crown);
+        var ring = document.createElement("div");
+        ring.className = "shieldring";
+        var snum = document.createElement("div");
+        snum.className = "shieldnum";
+        snum.textContent = "盾 " + kingShield;
+        ring.appendChild(snum);
+        king.el.appendChild(ring);
+        king.el.style.transform = "translate(-50%,-50%) scale(2.2)";
+        king.vx = 0; king.vy = 0;
+        kingDiveTimer = KING_DIVE_INTERVAL;
+        // 多名护卫呈扇形护驾
+        for(var g=0; g<GUARD_COUNT; g++){
+          var off = (g - (GUARD_COUNT - 1) / 2) * 70;
+          spawnGuard(cx + off, cy + 22 + Math.abs(off) * 0.12);
+        }
+        showPeace();
+        updateHud();
+      }
+
+      function spawnGuard(x, y){
+        var g = spawnMosquito(x, y, "guard");
+        g.el.classList.add("guard");
+        g.biteCd = 900;
+        return g;
+      }
+
+      function updateKing(dt){
+        if(!king || !king.alive) return;
+        if(phase3 === "standoff"){
+          standoffTimer -= dt;
+          peacebubbleEl.style.left = king.x + "px";
+          peacebubbleEl.style.top = (king.y - 34) + "px";
+          if(standoffTimer <= 0){ peaceEnding(); }
+          return;
+        }
+        if(phase3 === "battle"){
+          lv2Elapsed += dt;
+          spawnInterval = Math.max(KING_SPAWN_MIN, KING_SPAWN_BASE - lv2Elapsed * 0.01);
+          spawnTimer -= dt;
+          if(spawnTimer <= 0 && mosquitoes.length < L3_MOB_CAP){
+            spawnTimer = spawnInterval;
+            kingSummon();
+          }
+          // 蚊王亲自俯冲
+          if(king.state === "air"){
+            kingDiveTimer -= dt;
+            if(kingDiveTimer <= 0){
+              kingDiveTimer = KING_DIVE_INTERVAL;
+              king.state = "kingdive";
+              king.vx = 0; king.vy = 1.2;
+              slide(520, 140, .4, "sawtooth", .08);
+            }
+          }
+        }
+      }
+
+      function kingBite(m){
+        if(!running) return;
+        hp -= KING_DIVE_DAMAGE;
+        if(hp < 0) hp = 0;
+        for(var i=0;i<KING_DIVE_DAMAGE;i++) addBump(m.x + rand(-26, 26));
+        floatText(m.x, biteY() - 14, "蚊王叮! -" + KING_DIVE_DAMAGE);
+        m.state = "kingretreat";
+        hurtFlash();
+        healthHit();
+        shake();
+        biteSound(KING_DIVE_DAMAGE);
+        updateHud();
+        if(hp <= 0){ lose(); }
+      }
+
+      function kingSummon(){
+        var cx = king ? king.x : app.clientWidth / 2;
+        var cy = king ? king.y : airTop() + 40;
+        var type = Math.random() < 0.5 ? "revenge" : "normal";
+        var m = spawnMosquito(cx + rand(-24, 24), cy + rand(6, 34), type);
+        m.vy = rand(0.4, 1.4);
+        m.biteCd = rand(150, 700);
+      }
+
+      function startBattle(){
+        phase3 = "battle";
+        hidePeace();
+        lv2Elapsed = 0;
+        spawnInterval = KING_SPAWN_BASE;
+        spawnTimer = 500;
+        if(king){ king.el.classList.add("enraged"); }
+        showBetween("蚊王暴怒!", "打爆它的 " + KING_SHIELD + " 层护盾!");
+        setTimeout(hideBetween, 1300);
+        floatText(app.clientWidth / 2, airTop() + 40, "开战!");
+        slide(90, 220, .35, "sawtooth", .09);
+        tone(60, .3, "square", .05, .05);
+      }
+
+      function hitKing(){
+        kingShield = Math.max(0, kingShield - 1);
+        if(king){
+          king.el.classList.remove("shieldhit");
+          void king.el.offsetWidth;
+          king.el.classList.add("shieldhit");
+        }
+        combo += 1;
+        comboTimer = 1500;
+        if(combo > bestCombo) bestCombo = combo;
+        score += 3;
+        showCombo();
+        floatText(lastTap.x, lastTap.y, kingShield > 0 ? "盾 " + kingShield : "破!");
+        updateShieldRing();
+        shieldSound(kingShield <= 0);
+        updateHud();
+        if(kingShield <= 0){ battleWin(); }
+      }
+
+      // 更新护盾环显示（层数 + 低盾变红）
+      function updateShieldRing(){
+        if(!king) return;
+        var ring = king.el.querySelector(".shieldring");
+        var num = king.el.querySelector(".shieldnum");
+        if(kingShield <= 0){
+          if(ring) ring.remove();
+          if(num) num.remove();
+          king.el.classList.remove("shielded");
+          return;
+        }
+        if(num) num.textContent = "盾 " + kingShield;
+        var weak = kingShield <= KING_SHIELD * 0.4;
+        if(ring) ring.classList.toggle("weak", weak);
+        if(num) num.classList.toggle("weak", weak);
+      }
+
+      function showPeace(){
+        if(!king) return;
+        peacebubbleEl.style.left = king.x + "px";
+        peacebubbleEl.style.top = (king.y - 34) + "px";
+        peacebubbleEl.classList.add("show");
+      }
+      function hidePeace(){ peacebubbleEl.classList.remove("show"); }
+
+      // ===== 结局 =====
+      function lose(){
+        running = false;
+        cancelAnimationFrame(raf);
+        finish("lose");
+      }
+      function battleWin(){
+        running = false;
+        cancelAnimationFrame(raf);
+        finish("battle");
+      }
+      function peaceEnding(){
+        running = false;
+        cancelAnimationFrame(raf);
+        hidePeace();
+        finish("peace");
+      }
+
+      function finish(outcome){
+        hideCombo();
+        hidePeace();
+        var record = score > highScore;
+        if(record){
+          highScore = score;
+          try{ localStorage.setItem("dinggebao_best", String(highScore)); }catch(error){}
+        }
+        if(outcome === "peace"){
+          resultTitle.textContent = "世界和平 ✌";
+          resultText.textContent = "你放下了拍子，与蚊子握手言和。从此天下太平，再没有蚊子来骚扰你。";
+          peaceJingle();
+        }else if(outcome === "battle"){
+          resultTitle.textContent = "蚊王已灭";
+          resultText.textContent = "护盾被你拍爆，全世界的蚊子都被消灭了！叮死 " + score + " 只。" + (bestCombo >= 5 ? " 最高 " + bestCombo + " 连击。" : "");
+          winJingle();
+        }else{
+          resultTitle.textContent = "被叮爆了";
+          resultText.textContent = "额头起满了包… 共叮死 " + score + " 只。" + (bestCombo >= 5 ? " 最高 " + bestCombo + " 连击。" : "");
+          loseJingle();
+        }
+        rankEl.textContent = (record ? "新纪录! " : "") + "最高纪录 " + highScore + " 分";
+        if(bestStartEl) bestStartEl.textContent = "最高纪录 " + highScore + " 分";
+        resultScreen.classList.remove("hide");
+      }
+
+      function showCombo(){
+        if(combo < 2){ hideCombo(); return; }
+        comboEl.querySelector("b").textContent = combo;
+        comboEl.classList.toggle("hot", combo >= 6);
+        comboEl.classList.add("show");
+        comboEl.classList.remove("pop");
+        void comboEl.offsetWidth;
+        comboEl.classList.add("pop");
+      }
+      function hideCombo(){ comboEl.classList.remove("show"); }
+      function breakCombo(){ combo = 0; comboTimer = 0; hideCombo(); }
+
+      function splat(x,y){
+        var el = document.createElement("div");
+        el.className = "splat";
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+        arena.appendChild(el);
+        setTimeout(function(){ el.remove(); }, 320);
+      }
+
+      function floatText(x,y,text){
+        var el = document.createElement("div");
+        el.className = "float";
+        el.textContent = text;
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+        arena.appendChild(el);
+        setTimeout(function(){ el.remove(); }, 760);
+      }
+
+      function shake(){
+        app.classList.remove("shake");
+        void app.offsetWidth;
+        app.classList.add("shake");
+      }
+      function hurtFlash(){
+        app.classList.remove("hurt");
+        void app.offsetWidth;
+        app.classList.add("hurt");
+      }
+
+      function showBetween(title, sub){
+        between.querySelector("b").textContent = title;
+        between.querySelector("span").textContent = sub;
+        between.classList.add("show");
+      }
+      function hideBetween(){ between.classList.remove("show"); }
+
+      function updateHud(){
+        lifeEl.textContent = hp;
+        remainEl.textContent = level === 3 ? kingShield : remaining;
+        scoreEl.textContent = score;
+        modeEl.textContent = level === 3 ? "护盾" : "蚊子";
+        updateHearts();
+      }
+
+      function buildHearts(){
+        updateHearts();
+      }
+      function updateHearts(){
+        var pct = Math.max(0, hp) / MAX_HP * 100;
+        hpfillEl.style.width = pct + "%";
+        hpnumEl.textContent = Math.max(0, hp);
+        if(hp <= MAX_HP * 0.3) healthbarEl.classList.add("low");
+        else healthbarEl.classList.remove("low");
+      }
+      function healthHit(){
+        healthbarEl.classList.remove("hit");
+        void healthbarEl.offsetWidth;
+        healthbarEl.classList.add("hit");
+      }
+
+      function tone(freq,dur,type,vol,when){
+        try{
+          if(!audioCtx) return;
+          var t0 = audioCtx.currentTime + (when || 0);
+          var osc = audioCtx.createOscillator();
+          var gain = audioCtx.createGain();
+          osc.type = type || "sine";
+          osc.frequency.setValueAtTime(freq, t0);
+          gain.gain.setValueAtTime(vol == null ? .075 : vol, t0);
+          gain.gain.exponentialRampToValueAtTime(.0008, t0 + dur);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(t0); osc.stop(t0 + dur);
+        }catch(error){}
+      }
+      // 滑音（俯冲/破盾用）
+      function slide(f1,f2,dur,type,vol){
+        try{
+          if(!audioCtx) return;
+          var t0 = audioCtx.currentTime;
+          var osc = audioCtx.createOscillator();
+          var gain = audioCtx.createGain();
+          osc.type = type || "sawtooth";
+          osc.frequency.setValueAtTime(f1, t0);
+          osc.frequency.exponentialRampToValueAtTime(Math.max(20,f2), t0 + dur);
+          gain.gain.setValueAtTime(vol == null ? .07 : vol, t0);
+          gain.gain.exponentialRampToValueAtTime(.0008, t0 + dur);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(t0); osc.stop(t0 + dur);
+        }catch(error){}
+      }
+      // 一串音符做小旋律
+      function jingle(notes, type, gap){
+        gap = gap || 0.09;
+        for(var i=0;i<notes.length;i++){
+          tone(notes[i], gap*1.6, type || "square", .08, i*gap);
+        }
+      }
+      // 击杀音：随连击升调，带泛音
+      function killSound(){
+        var base = 420 + Math.min(combo,30) * 16;
+        tone(base, .07, "square", .07);
+        tone(base*1.5, .06, "square", .03, .01);
+      }
+      function biteSound(dmg){
+        slide(dmg > 1 ? 240 : 180, 60, .16, "sawtooth", .08);
+      }
+      function comboSound(level){
+        // 连击进阶提示音
+        if(level === 2) jingle([523,659,784], "square", .07);
+        else if(level === 3) jingle([659,880,1047], "square", .06);
+      }
+      function missSound(){ tone(110, .05, "sine", .05); slide(120,70,.08,"sine",.04); }
+      function enrageSound(){ slide(160,300,.12,"sawtooth",.07); }
+      function shieldSound(broke){
+        if(broke){ jingle([784,988,1319,1568], "square", .07); }
+        else { tone(330, .05, "square", .06); tone(495, .05, "square", .03, .02); }
+      }
+      function winJingle(){ jingle([523,659,784,1047,1319], "square", .12); }
+      function loseJingle(){ jingle([392,330,262,196], "triangle", .14); }
+      function peaceJingle(){ jingle([523,659,784,659,523], "sine", .16); }
+
+      function pick(list){ return list[Math.floor(Math.random()*list.length)]; }
+      function rand(a,b){ return a + Math.random() * (b-a); }
+      function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+      function moveSwatter(clientX, clientY){
+        swatter.style.left = clientX + "px";
+        swatter.style.top = clientY + "px";
+      }
+      function swat(){
+        swatter.classList.remove("swat");
+        void swatter.offsetWidth;
+        swatter.classList.add("swat");
+      }
+
+      document.addEventListener("pointermove", function(evt){
+        moveSwatter(evt.clientX, evt.clientY);
+      });
+
+      arena.addEventListener("pointerdown", function(evt){
+        moveSwatter(evt.clientX, evt.clientY);
+        swat();
+        if(!running) return;
+        evt.preventDefault();
+        var rect = app.getBoundingClientRect();
+        var px = evt.clientX - rect.left;
+        var py = evt.clientY - rect.top;
+        var target = null, bestDist = Infinity;
+        mosquitoes.forEach(function(m){
+          if(!m.alive || m.immune > 0) return;
+          var d = Math.hypot(m.x - px, m.y - py);
+          if(d < bestDist){ bestDist = d; target = m; }
+        });
+        if(target && bestDist <= HIT_RADIUS){
+          hitMosquito(target, evt.clientX, evt.clientY);
+        }else{
+          lastTap.x = px; lastTap.y = py;
+          splat(px, py);
+          breakCombo();
+          missSound();
+        }
+      });
+
+      document.getElementById("startBtn").addEventListener("click", function(){
+        try{
+          if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          if(audioCtx.state === "suspended") audioCtx.resume();
+        }catch(error){}
+        start();
+      });
+      document.getElementById("againBtn").addEventListener("click", start);
+
+      window.addEventListener("load", function(){
+        try{
+          if(bestStartEl) bestStartEl.textContent = "最高纪录 " + highScore + " 分";
+          buildHearts();
+          updateHud();
+        }catch(error){
+          console.error(error);
+          document.body.innerHTML = "<div style='min-height:100vh;display:grid;place-items:center;background:#171631;color:white;font-family:sans-serif;text-align:center;padding:24px'><div><h2>启动失败</h2><p>请刷新再试。</p></div></div>";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
