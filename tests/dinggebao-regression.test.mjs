@@ -20,6 +20,12 @@ test("level 2 objective counts angry mosquitoes only", () => {
   assert.doesNotMatch(html, /remaining\+\+;/);
 });
 
+test("level 2 to boss transition keeps the game loop alive", () => {
+  assert.doesNotMatch(html, /if\s*\(\s*angryRemaining\s*<=\s*0\s*\)\s*\{\s*startLevel3\s*\(\s*\)\s*;\s*return\s*;\s*\}/);
+  assert.match(html, /if\s*\(\s*angryRemaining\s*<=\s*0\s*\)\s*\{\s*startLevel3\s*\(\s*\)\s*;\s*\}/);
+  assert.match(html, /if\s*\(\s*level\s*===\s*3\s*\)\s*\{\s*updateKing\s*\(\s*dt\s*\)\s*;\s*\}/);
+});
+
 test("start screen exposes bottom start, rank, and share actions", () => {
   assert.match(html, /id="startActions"/);
   assert.match(html, /id="startBtn"/);
@@ -52,6 +58,32 @@ test("hit and kill interactions trigger vibration feedback", () => {
   assert.match(html, /navigator\.vibrate/);
   assert.match(html, /vibrate\s*\(\s*"swat"\s*\)/);
   assert.match(html, /vibrate\s*\(\s*"hit"\s*\)/);
+});
+
+test("gameplay exposes a return-to-home button", () => {
+  assert.match(html, /id="exitBtn"/);
+  assert.match(html, /class="[^"]*\bexit-btn\b/);
+  assert.match(html, /function\s+exitToStart\s*\(/);
+  assert.match(html, /exitBtn\.addEventListener\("click",\s*exitToStart\)/);
+  assert.match(html, /startScreen\.classList\.remove\("hide"\)/);
+});
+
+test("swatter keeps pointer positioning separate from swing animation", () => {
+  assert.match(html, /id="swatterVisual"/);
+  assert.match(html, /var\s+swatterVisual\s*=\s*document\.getElementById\("swatterVisual"\)/);
+  assert.match(html, /\.swatter-visual\.swat\{animation:swat/);
+  assert.doesNotMatch(html, /\.swatter\.swat\{animation:swat/);
+  assert.doesNotMatch(html, /@keyframes\s+swat\s*\{[\s\S]*translate\(-50%,-30px\)/);
+});
+
+test("score is distinct from kill counts and animates when it changes", () => {
+  assert.match(html, /<small>分数<\/small><b id="score">0<\/b>/);
+  assert.match(html, /var\s+defeatedCount\s*=\s*0;/);
+  assert.match(html, /var\s+killedCount\s*=\s*0;/);
+  assert.match(html, /var\s+lastScoreRendered\s*=\s*-1;/);
+  assert.match(html, /\.score-pop/);
+  assert.match(html, /scoreEl\.classList\.add\("score-pop"\)/);
+  assert.match(html, /击败\s*"\s*\+\s*defeatedCount\s*\+\s*"\s*个敌人，拍死\s*"\s*\+\s*killedCount\s*\+\s*"\s*只蚊子，得分\s*"\s*\+\s*score\s*\+\s*"\s*分/);
 });
 
 function test(name, fn) {
