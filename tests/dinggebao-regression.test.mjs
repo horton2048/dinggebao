@@ -43,6 +43,26 @@ test("start screen exposes bottom start, rank, and share actions", () => {
   assert.ok(statSync(bgPath).size > 100000);
 });
 
+test("start screen preserves the full cover art width", () => {
+  assert.match(html, /\.start-screen\{[\s\S]*background-size:100% auto;/);
+  assert.doesNotMatch(html, /\.start-screen\{[\s\S]*background-size:cover;/);
+  assert.match(html, /\.start-screen\{[\s\S]*background-position:center top;/);
+});
+
+test("start action dock is lifted and social modals are share-ready", () => {
+  assert.match(html, /padding:0 18px calc\(clamp\(46px,8vh,78px\) \+ var\(--safe-bottom\)\);/);
+  assert.match(html, /class="rank-summary"/);
+  assert.match(html, /本周好友挑战/);
+  assert.match(html, /已有 <b>23<\/b> 人通过分享加入灭蚊队/);
+  assert.match(html, /id="sharePreview"/);
+  assert.match(html, /class="share-metrics"/);
+  assert.match(html, /好友挑战口令/);
+  assert.match(html, /我的最高分/);
+  assert.match(html, /\.modal\{\s*position:absolute;z-index:90;/);
+  assert.match(html, /modal\.style\.opacity\s*=\s*"1";/);
+  assert.doesNotMatch(html, /modal\.querySelector\("\.modal-panel"\),\s*\{y:24,\s*scale:\.94,\s*opacity:0\}/);
+});
+
 test("gsap is bundled locally and loaded before the game script", () => {
   assert.match(html, /<script src="vendor\/gsap\.min\.js"><\/script>/);
   const scriptIndex = html.indexOf('<script src="vendor/gsap.min.js"></script>');
