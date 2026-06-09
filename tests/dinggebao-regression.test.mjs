@@ -52,12 +52,17 @@ test("start screen preserves the full cover art width", () => {
 test("start action dock is lifted and social modals are share-ready", () => {
   assert.match(html, /padding:0 18px calc\(clamp\(46px,8vh,78px\) \+ var\(--safe-bottom\)\);/);
   assert.match(html, /class="rank-summary"/);
-  assert.match(html, /本周好友挑战/);
-  assert.match(html, /已有 <b>23<\/b> 人通过分享加入灭蚊队/);
+  // 排行榜改为本地真实数据驱动（总场数/最高分/当前排名/成就数），不再是假的好友挑战
+  assert.match(html, /总场数/);
+  assert.match(html, /当前排名/);
+  assert.match(html, /成就数/);
+  assert.match(html, /本地排行榜/);
   assert.match(html, /id="sharePreview"/);
   assert.match(html, /class="share-metrics"/);
-  assert.match(html, /好友挑战口令/);
-  assert.match(html, /我的最高分/);
+  // 分享卡改为分数/排名/成就三项指标
+  assert.match(html, /分享文案/);
+  assert.match(html, /id="shareRank"/);
+  assert.match(html, /id="shareAchieve"/);
   assert.match(html, /\.modal\{\s*position:absolute;z-index:90;/);
   assert.match(html, /modal\.style\.opacity\s*=\s*"1";/);
   assert.doesNotMatch(html, /modal\.querySelector\("\.modal-panel"\),\s*\{y:24,\s*scale:\.94,\s*opacity:0\}/);
