@@ -638,38 +638,37 @@
     <section class="modal hide" id="rankModal" aria-hidden="true">
       <div class="modal-panel">
         <div class="modal-head">
-          <div class="modal-title">好友排行</div>
+          <div class="modal-title">排行榜</div>
           <button class="modal-close" id="rankCloseBtn" type="button" aria-label="关闭排行榜">×</button>
         </div>
-        <div class="rank-summary">
-          <span>本周好友挑战</span>
-          <strong>你暂列第 4，差 25 分进前三</strong>
-          <small>分享战绩后，好友会带着你的分数来挑战。</small>
+        <div class="rank-summary" id="rankSummary">
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:8px; margin-bottom:12px">
+            <div style="text-align:center"><div id="statGames" style="font-size:18px; font-weight:900">0</div><small>总场数</small></div>
+            <div style="text-align:center"><div id="statBest" style="font-size:18px; font-weight:900">0</div><small>最高分</small></div>
+            <div style="text-align:center"><div id="statRank" style="font-size:18px; font-weight:900">-</div><small>当前排名</small></div>
+            <div style="text-align:center"><div id="statAchieve" style="font-size:18px; font-weight:900">0</div><small>成就数</small></div>
+          </div>
         </div>
-        <ol class="rank-list">
-          <li class="rank-row leader"><b>1</b><span><em>阿包猎手</em><small class="tag">已分享战绩，3 人应战</small></span><strong>186</strong></li>
-          <li class="rank-row"><b>2</b><span><em>今晚不痒</em><small class="tag">刚刚邀你来破纪录</small></span><strong>152</strong></li>
-          <li class="rank-row"><b>3</b><span><em>红包制造机</em><small class="tag">最高 18 连击</small></span><strong>139</strong></li>
-          <li class="rank-row"><b>4</b><span><em>小刀老师</em><small class="tag">待分享给好友挑战</small></span><strong>128</strong></li>
-          <li class="rank-row"><b>5</b><span><em>拍子别停</em><small class="tag">刚刚截图发群</small></span><strong>111</strong></li>
+        <ol class="rank-list" id="rankList">
+          <li style="padding:16px; text-align:center; color:#999; font-size:12px">暂无数据·首次游玩后生成</li>
         </ol>
-        <div class="rank-foot">已有 <b>23</b> 人通过分享加入灭蚊队</div>
+        <div class="rank-foot" id="rankFooter">本地排行榜</div>
       </div>
     </section>
 
     <section class="modal hide" id="shareModal" aria-hidden="true">
       <div class="modal-panel">
         <div class="modal-head">
-          <div class="modal-title">分享挑战</div>
+          <div class="modal-title">分享战绩</div>
           <button class="modal-close" id="shareCloseBtn" type="button" aria-label="关闭分享">×</button>
         </div>
         <div class="share-card">
-          <span class="share-copy-title">好友挑战口令</span>
-          <strong class="share-preview" id="sharePreview">我在《叮了个包》发起好友挑战，来破我的最高分。</strong>
+          <span class="share-copy-title">分享文案</span>
+          <strong class="share-preview" id="sharePreview">我在《叮了个包》取得不错的成绩，快来挑战我！</strong>
           <div class="share-metrics">
-            <span><b>10</b><small>个包以内</small></span>
-            <span><b>3</b><small>关挑战</small></span>
-            <span><b>好友</b><small>可破榜</small></span>
+            <span><b id="shareHighScore">0</b><small>最高分</small></span>
+            <span><b id="shareRank">-</b><small>排名</small></span>
+            <span><b id="shareAchieve">0</b><small>成就</small></span>
           </div>
         </div>
         <div class="share-actions">
@@ -759,6 +758,35 @@
       var L3_MOB_CAP = 48;        // 第三关场上小蚊上限
       var L3_REVENGE_RATE = 0.78; // 召唤出愤怒蚊的概率
 
+      // ===== 多关卡配置 =====
+      var levelConfigs = [
+        {level:1, name:"初入虫海", count:8, mobCap:30, descrip:"8 只普通蚊子，无伤害"},
+        {level:2, name:"复仇时刻", count:13, countRevenge:5, mobCap:50, descrip:"母蚊孵化，躲避愤怒蚊"},
+        {level:3, name:"蚊王出世", count:0, kingShield:26, guardCount:4, mobCap:48, descrip:"击败蚊王或选择和平"},
+        {level:4, name:"毒蚊浪潮", count:16, mobCap:65, spawnBase:750, spawnMin:280, descrip:"16 只蚊子，拍击强化"},
+        {level:5, name:"群蚊狂欢", count:12, mobCap:70, spawnBase:600, spawnMin:200, descrip:"12 只蚊子，超快繁衍"},
+        {level:6, name:"终极挑战", count:20, mobCap:85, spawnBase:500, spawnMin:150, descrip:"20 只蚊子，地狱难度"}
+      ];
+      var currentLevelConfig = levelConfigs[0];
+
+      // ===== 成就系统定义 =====
+      var achievementDefs = {
+        "first_kill": {name:"初试锋芒", icon:"🔪"},
+        "reach_lvl2": {name:"苦战中", icon:"⚔️"},
+        "reach_lvl3": {name:"蚊王挑战", icon:"👑"},
+        "reach_lvl4": {name:"毒蚊克星", icon:"💀"},
+        "reach_lvl5": {name:"群蚊猎手", icon:"🌊"},
+        "reach_lvl6": {name:"终极狩猎", icon:"⭐"},
+        "score_100": {name:"百分达成", icon:"💯"},
+        "score_300": {name:"炉火纯青", icon:"🔥"},
+        "combo_10": {name:"连击大师", icon:"⚡"},
+        "combo_20": {name:"手速怪", icon:"🚀"},
+        "no_hurt": {name:"金钟罩", icon:"🛡️"},
+        "beat_king": {name:"蚊王克星", icon:"👑💥"},
+        "peace_master": {name:"和平使者", icon:"✌️"},
+        "all_levels": {name:"全部通关", icon:"🏆"}
+      };
+
       var mosquitoes = [];
       var mother = null;
       var king = null;
@@ -791,6 +819,18 @@
       var reducedMotion = false;
       try{ highScore = parseInt(localStorage.getItem("dinggebao_best"),10) || 0; }catch(error){}
       try{ reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(error){}
+
+      // ===== 排行榜和成就数据 =====
+      var gameRecords = [];
+      var unlockedAchievements = {};
+      try{
+        var recordsJson = localStorage.getItem("dinggebao_records");
+        if(recordsJson) gameRecords = JSON.parse(recordsJson);
+      }catch(error){ gameRecords = []; }
+      try{
+        var achievJson = localStorage.getItem("dinggebao_achievements");
+        if(achievJson) unlockedAchievements = JSON.parse(achievJson);
+      }catch(error){ unlockedAchievements = {}; }
 
       var deathLines = ["啪!","叮死你","拍扁","碎!","得手"];
       var enrageLines = ["拍错了!","激怒了","它记仇了","变敌"];
@@ -993,6 +1033,180 @@
         updateMosquitoes(dt / 16.67, dt);
         updateHud();
         raf = requestAnimationFrame(loop);
+      }
+
+      // ===== 多关卡支持 =====
+      function getLevelConfig(lvl){
+        for(var i=0;i<levelConfigs.length;i++){
+          if(levelConfigs[i].level === lvl) return levelConfigs[i];
+        }
+        return levelConfigs[0];
+      }
+
+      function startLevel4(){
+        level = 4;
+        currentLevelConfig = getLevelConfig(4);
+        mosquitoes.forEach(function(m){ m.el.remove(); });
+        mosquitoes = [];
+        mother = null;
+        remaining = currentLevelConfig.count;
+        angryRemaining = 0;
+        modeEl.textContent = "蚊子";
+        showBetween(currentLevelConfig.name, currentLevelConfig.descrip);
+        delay(hideBetween, 1600);
+        for(var i=0;i<currentLevelConfig.count;i++){
+          var point = scatterPoint(i, currentLevelConfig.count);
+          spawnMosquito(point.x, point.y, "normal");
+        }
+        hatched = true;
+        running = true;
+        last = 0;
+        MOB_CAP = currentLevelConfig.mobCap || MOB_CAP;
+        SPAWN_BASE = currentLevelConfig.spawnBase || SPAWN_BASE;
+        SPAWN_MIN = currentLevelConfig.spawnMin || SPAWN_MIN;
+        spawnTimer = SPAWN_BASE;
+        spawnInterval = SPAWN_BASE;
+        lv2Elapsed = 0;
+        updateHud();
+        raf = requestAnimationFrame(loop);
+      }
+
+      function startLevel5(){
+        level = 5;
+        currentLevelConfig = getLevelConfig(5);
+        mosquitoes.forEach(function(m){ m.el.remove(); });
+        mosquitoes = [];
+        mother = null;
+        remaining = currentLevelConfig.count;
+        angryRemaining = 0;
+        modeEl.textContent = "蚊子";
+        showBetween(currentLevelConfig.name, currentLevelConfig.descrip);
+        delay(hideBetween, 1600);
+        for(var i=0;i<currentLevelConfig.count;i++){
+          var point = scatterPoint(i, currentLevelConfig.count);
+          spawnMosquito(point.x, point.y, Math.random() < 0.3 ? "revenge" : "normal");
+        }
+        hatched = true;
+        running = true;
+        last = 0;
+        MOB_CAP = currentLevelConfig.mobCap || MOB_CAP;
+        SPAWN_BASE = currentLevelConfig.spawnBase || 600;
+        SPAWN_MIN = currentLevelConfig.spawnMin || 200;
+        spawnTimer = SPAWN_BASE;
+        spawnInterval = SPAWN_BASE;
+        lv2Elapsed = 0;
+        updateHud();
+        raf = requestAnimationFrame(loop);
+      }
+
+      function startLevel6(){
+        level = 6;
+        currentLevelConfig = getLevelConfig(6);
+        mosquitoes.forEach(function(m){ m.el.remove(); });
+        mosquitoes = [];
+        mother = null;
+        remaining = currentLevelConfig.count;
+        angryRemaining = 0;
+        modeEl.textContent = "蚊子";
+        showBetween("最终决战", "击败所有蚊子，获得最终胜利！");
+        delay(hideBetween, 1600);
+        for(var i=0;i<currentLevelConfig.count;i++){
+          var point = scatterPoint(i, currentLevelConfig.count);
+          spawnMosquito(point.x, point.y, Math.random() < 0.5 ? "revenge" : "normal");
+        }
+        hatched = true;
+        running = true;
+        last = 0;
+        MOB_CAP = currentLevelConfig.mobCap || MOB_CAP;
+        SPAWN_BASE = currentLevelConfig.spawnBase || 500;
+        SPAWN_MIN = currentLevelConfig.spawnMin || 150;
+        spawnTimer = SPAWN_BASE;
+        spawnInterval = SPAWN_BASE;
+        lv2Elapsed = 0;
+        updateHud();
+        raf = requestAnimationFrame(loop);
+      }
+
+      // ===== 排行榜和成就 =====
+      function getLeaderboard(limit){
+        var sorted = gameRecords.slice().sort(function(a,b){ return b.score - a.score; });
+        return sorted.slice(0, limit || 10);
+      }
+
+      function getPlayerRank(){
+        var sorted = gameRecords.slice().sort(function(a,b){ return b.score - a.score; });
+        for(var i=0; i<sorted.length; i++){
+          if(sorted[i].timestamp === gameRecords[0].timestamp) return i + 1;
+        }
+        return sorted.length + 1;
+      }
+
+      function saveGameRecord(){
+        var record = {
+          timestamp: Date.now(),
+          score: score,
+          level: level,
+          killedCount: killedCount,
+          defeatedCount: defeatedCount,
+          bestCombo: bestCombo
+        };
+        gameRecords.unshift(record);
+        if(gameRecords.length > 100) gameRecords.pop();
+        try{ localStorage.setItem("dinggebao_records", JSON.stringify(gameRecords)); }catch(e){}
+      }
+
+      function unlockAchievement(id){
+        if(!unlockedAchievements[id]){
+          unlockedAchievements[id] = true;
+          if(achievementDefs[id]){
+            floatText(app.clientWidth/2, 80, "成就: " + achievementDefs[id].name);
+          }
+          try{ localStorage.setItem("dinggebao_achievements", JSON.stringify(unlockedAchievements)); }catch(e){}
+        }
+      }
+
+      function checkAchievements(){
+        if(killedCount > 0) unlockAchievement("first_kill");
+        if(score >= 100) unlockAchievement("score_100");
+        if(score >= 300) unlockAchievement("score_300");
+        if(bestCombo >= 10) unlockAchievement("combo_10");
+        if(bestCombo >= 20) unlockAchievement("combo_20");
+        if(level >= 2) unlockAchievement("reach_lvl2");
+        if(level >= 3) unlockAchievement("reach_lvl3");
+        if(level >= 4) unlockAchievement("reach_lvl4");
+        if(level >= 5) unlockAchievement("reach_lvl5");
+        if(level >= 6) unlockAchievement("reach_lvl6");
+        if(hp === MAX_HP) unlockAchievement("no_hurt");
+      }
+
+      function updateRankDisplay(){
+        var best = 0, sum = 0;
+        gameRecords.forEach(function(r){ best = Math.max(best, r.score); sum += r.score; });
+        var avg = gameRecords.length > 0 ? Math.round(sum / gameRecords.length) : 0;
+        var achieveCount = Object.keys(unlockedAchievements).length;
+        var playerRank = getPlayerRank();
+
+        document.getElementById("statGames").textContent = gameRecords.length;
+        document.getElementById("statBest").textContent = best;
+        document.getElementById("statRank").textContent = playerRank;
+        document.getElementById("statAchieve").textContent = achieveCount;
+
+        var leaderboard = getLeaderboard(10);
+        var html = '<ol class="rank-list" style="margin:0; padding:0; list-style:none">';
+        if(leaderboard.length === 0){
+          html += '<li style="padding:16px; text-align:center; color:#999; font-size:12px">暂无数据·首次游玩后生成</li>';
+        }else{
+          leaderboard.forEach(function(r, idx){
+            var levelText = "第" + r.level + "关";
+            html += '<li class="rank-row' + (idx === 0 ? ' leader' : '') + '" style="padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:space-between">';
+            html += '<b style="width:30px">' + (idx + 1) + '</b>';
+            html += '<span style="flex:1; margin:0 8px"><em>游戏</em><small class="tag" style="display:block; font-size:10px; color:#999; margin-top:2px">' + levelText + '·' + r.bestCombo + '连击</small></span>';
+            html += '<strong style="color:' + (idx === 0 ? '#ffe15a' : '#fff') + '">' + r.score + '</strong>';
+            html += '</li>';
+          });
+        }
+        html += '</ol>';
+        document.getElementById("rankList").innerHTML = html;
       }
 
       function updateMosquitoes(step, dt){
@@ -1443,6 +1657,24 @@
       function hidePeace(){ peacebubbleEl.classList.remove("show"); }
 
       // ===== 结局 =====
+      function nextLevelOrEnd(outcome){
+        if(level < 6){
+          // 非最后一关，过渡到下一关
+          running = false;
+          cancelAnimationFrame(raf);
+          delay(function(){
+            if(level === 1) startLevel2();
+            else if(level === 2) startLevel3();
+            else if(level === 3) startLevel4();
+            else if(level === 4) startLevel5();
+            else if(level === 5) startLevel6();
+          }, 1500);
+        }else{
+          // 最后一关（第6关），游戏结束
+          finish(outcome);
+        }
+      }
+
       function lose(){
         running = false;
         cancelAnimationFrame(raf);
@@ -1452,38 +1684,57 @@
         running = false;
         cancelAnimationFrame(raf);
         defeatedCount += 1;
-        finish("battle");
+        if(level < 3){
+          nextLevelOrEnd("battle");
+        }else{
+          nextLevelOrEnd("battle");
+        }
       }
       function peaceEnding(){
         running = false;
         cancelAnimationFrame(raf);
         hidePeace();
-        finish("peace");
+        if(level < 3){
+          nextLevelOrEnd("peace");
+        }else{
+          nextLevelOrEnd("peace");
+        }
       }
 
       function finish(outcome){
         app.classList.remove("playing");
         hideCombo();
         hidePeace();
+        saveGameRecord();
+        checkAchievements();
+
+        if(outcome === "peace") unlockAchievement("peace_master");
+        if(outcome === "battle" && level >= 3) unlockAchievement("beat_king");
+        if(level >= 6) unlockAchievement("all_levels");
+
         var record = score > highScore;
         if(record){
           highScore = score;
           try{ localStorage.setItem("dinggebao_best", String(highScore)); }catch(error){}
         }
+
+        var levelMsg = level >= 4 ? "第" + level + "关" : (level === 3 ? "蚊王关" : "第" + level + "关");
         if(outcome === "peace"){
           resultTitle.textContent = "世界和平 ✌";
-          resultText.textContent = "你放下了拍子，与蚊子握手言和。" + resultStatsText();
+          resultText.textContent = "你在" + levelMsg + "放下了拍子，与蚊子握手言和。" + resultStatsText();
           peaceJingle();
         }else if(outcome === "battle"){
-          resultTitle.textContent = "蚊王已灭";
-          resultText.textContent = "护盾被你拍爆，全世界的蚊子都被消灭了！" + resultStatsText();
+          resultTitle.textContent = level >= 6 ? "全部通关！" : "蚊王已灭";
+          resultText.textContent = (level >= 6 ? "你打爆了所有关卡的蚊王，成为最强灭蚊者！" : "护盾被你拍爆！") + resultStatsText();
           winJingle();
         }else{
           resultTitle.textContent = "被叮爆了";
-          resultText.textContent = "额头起满了包… " + resultStatsText();
+          resultText.textContent = "在" + levelMsg + "额头起满了包… " + resultStatsText();
           loseJingle();
         }
-        rankEl.textContent = (record ? "新纪录! " : "") + "最高纪录 " + highScore + " 分";
+
+        var playerRank = getPlayerRank();
+        rankEl.textContent = (record ? "新纪录! " : "") + "最高纪录 " + highScore + " 分 (排名: " + playerRank + ")";
         resultScreen.classList.remove("hide");
       }
 
@@ -1702,15 +1953,30 @@
       }
 
       function shareText(){
-        var bestLine = highScore > 0 ? "我的最高分 " + highScore + " 分，" : "我正在冲击好友榜，";
-        return "我在《叮了个包》发起好友挑战：" + bestLine + "第一关简单，第二关专打愤怒蚊。你能不被叮满 10 个包吗？";
+        var best = 0, achieveCount = 0;
+        gameRecords.forEach(function(r){ best = Math.max(best, r.score); });
+        achieveCount = Object.keys(unlockedAchievements).length;
+        var rank = getPlayerRank();
+        var bestLine = best > 0 ? "最高分 " + best + "，排名第" + rank : "正在冲击排行榜";
+        var achieveLine = achieveCount > 0 ? "已解锁" + achieveCount + "个成就" : "快来挑战";
+        return "我在《叮了个包》" + bestLine + "，" + achieveLine + "。你能超越我吗？🎮";
       }
       function refreshSharePreview(){
         if(sharePreview) sharePreview.textContent = shareText();
       }
+      function updateShareCard(){
+        var best = 0, achieveCount = 0;
+        gameRecords.forEach(function(r){ best = Math.max(best, r.score); });
+        achieveCount = Object.keys(unlockedAchievements).length;
+        var rank = getPlayerRank();
+        if(document.getElementById("shareHighScore")) document.getElementById("shareHighScore").textContent = best;
+        if(document.getElementById("shareRank")) document.getElementById("shareRank").textContent = rank > 100 ? "排外" : "#" + rank;
+        if(document.getElementById("shareAchieve")) document.getElementById("shareAchieve").textContent = achieveCount;
+        refreshSharePreview();
+      }
       function openShareModal(){
         if(shareStatus) shareStatus.textContent = "";
-        refreshSharePreview();
+        updateShareCard();
         openModal(shareModal);
       }
       function shareGame(){
@@ -1788,7 +2054,7 @@
         }
       });
 
-      rankBtn.addEventListener("click", function(){ openModal(rankModal); });
+      rankBtn.addEventListener("click", function(){ updateRankDisplay(); openModal(rankModal); });
       shareBtn.addEventListener("click", openShareModal);
       rankCloseBtn.addEventListener("click", function(){ hideModal(rankModal); });
       shareCloseBtn.addEventListener("click", function(){ hideModal(shareModal); });
