@@ -1741,34 +1741,113 @@
         }catch(error){}
       }
 
+      // ===== 音效合成器 =====
+      // 所有声音走总线：主增益 → 压限器 → 输出，连击密集时不会爆音
+      var masterBus = null;
+      var noiseBuf = null;
+      function audioBus(){
+        if(!audioCtx) return null;
+        if(!masterBus){
+          var comp = audioCtx.createDynamicsCompressor();
+          comp.threshold.value = -18;
+          comp.knee.value = 24;
+          comp.ratio.value = 6;
+          comp.attack.value = .003;
+          comp.release.value = .12;
+          comp.connect(audioCtx.destination);
+          masterBus = audioCtx.createGain();
+          masterBus.gain.value = .9;
+          masterBus.connect(comp);
+        }
+        return masterBus;
+      }
+      function noiseBuffer(){
+        if(!noiseBuf){
+          noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+          var data = noiseBuf.getChannelData(0);
+          for(var i=0;i<data.length;i++) data[i] = Math.random()*2-1;
+        }
+        return noiseBuf;
+      }
       function tone(freq,dur,type,vol,when){
         try{
-          if(!audioCtx) return;
+          var bus = audioBus();
+          if(!bus) return;
           var t0 = audioCtx.currentTime + (when || 0);
           var osc = audioCtx.createOscillator();
           var gain = audioCtx.createGain();
           osc.type = type || "sine";
           osc.frequency.setValueAtTime(freq, t0);
-          gain.gain.setValueAtTime(vol == null ? .075 : vol, t0);
+          gain.gain.setValueAtTime(.0001, t0);
+          gain.gain.linearRampToValueAtTime(vol == null ? .075 : vol, t0 + .005);
           gain.gain.exponentialRampToValueAtTime(.0008, t0 + dur);
-          osc.connect(gain); gain.connect(audioCtx.destination);
-          osc.start(t0); osc.stop(t0 + dur);
+          osc.connect(gain); gain.connect(bus);
+          osc.start(t0); osc.stop(t0 + dur + .02);
         }catch(error){}
       }
-      // 滑音（俯冲/破盾用）
-      function slide(f1,f2,dur,type,vol){
+      // 滑音（俯冲/开战用）
+      function slide(f1,f2,dur,type,vol,when){
         try{
-          if(!audioCtx) return;
-          var t0 = audioCtx.currentTime;
+          var bus = audioBus();
+          if(!bus) return;
+          var t0 = audioCtx.currentTime + (when || 0);
           var osc = audioCtx.createOscillator();
           var gain = audioCtx.createGain();
           osc.type = type || "sawtooth";
           osc.frequency.setValueAtTime(f1, t0);
           osc.frequency.exponentialRampToValueAtTime(Math.max(20,f2), t0 + dur);
-          gain.gain.setValueAtTime(vol == null ? .07 : vol, t0);
+          gain.gain.setValueAtTime(.0001, t0);
+          gain.gain.linearRampToValueAtTime(vol == null ? .07 : vol, t0 + .008);
           gain.gain.exponentialRampToValueAtTime(.0008, t0 + dur);
-          osc.connect(gain); gain.connect(audioCtx.destination);
-          osc.start(t0); osc.stop(t0 + dur);
+          osc.connect(gain); gain.connect(bus);
+          osc.start(t0); osc.stop(t0 + dur + .02);
+        }catch(error){}
+      }
+      // 噪声打击层：滤波白噪声做"啪/嚓/哗"的质感
+      function noiseHit(dur, fFrom, fTo, filterType, vol, when, q){
+        try{
+          var bus = audioBus();
+          if(!bus) return;
+          var t0 = audioCtx.currentTime + (when || 0);
+          var src = audioCtx.createBufferSource();
+          src.buffer = noiseBuffer();
+          var filter = audioCtx.createBiquadFilter();
+          filter.type = filterType || "bandpass";
+          filter.Q.value = q == null ? 1 : q;
+          filter.frequency.setValueAtTime(fFrom, t0);
+          if(fTo && fTo !== fFrom) filter.frequency.exponentialRampToValueAtTime(Math.max(40,fTo), t0 + dur);
+          var gain = audioCtx.createGain();
+          gain.gain.setValueAtTime(.0001, t0);
+          gain.gain.linearRampToValueAtTime(vol == null ? .1 : vol, t0 + .004);
+          gain.gain.exponentialRampToValueAtTime(.0008, t0 + dur);
+          src.connect(filter); filter.connect(gain); gain.connect(bus);
+          src.start(t0); src.stop(t0 + dur + .02);
+        }catch(error){}
+      }
+      // 蚊子翅膀声：双锯齿轻微失谐 + 带通，嗡嗡感
+      function buzz(f1, f2, dur, vol, when){
+        try{
+          var bus = audioBus();
+          if(!bus) return;
+          var t0 = audioCtx.currentTime + (when || 0);
+          var gain = audioCtx.createGain();
+          gain.gain.setValueAtTime(.0001, t0);
+          gain.gain.linearRampToValueAtTime(vol == null ? .05 : vol, t0 + .02);
+          gain.gain.exponentialRampToValueAtTime(.0008, t0 + dur);
+          var filter = audioCtx.createBiquadFilter();
+          filter.type = "bandpass";
+          filter.Q.value = 2;
+          filter.frequency.setValueAtTime((f1+f2)/2, t0);
+          filter.connect(gain); gain.connect(bus);
+          for(var i=0;i<2;i++){
+            var osc = audioCtx.createOscillator();
+            osc.type = "sawtooth";
+            var detune = i === 0 ? 1 : 1.04;
+            osc.frequency.setValueAtTime(f1*detune, t0);
+            osc.frequency.exponentialRampToValueAtTime(Math.max(20,f2*detune), t0 + dur);
+            osc.connect(filter);
+            osc.start(t0); osc.stop(t0 + dur + .02);
+          }
         }catch(error){}
       }
       // 一串音符做小旋律
@@ -1778,29 +1857,70 @@
           tone(notes[i], gap*1.6, type || "square", .08, i*gap);
         }
       }
-      // 击杀音：随连击升调，带泛音
+      // 击杀音："啪"的噪声拍击 + 随连击升调的弹响
       function killSound(){
-        var base = 420 + Math.min(combo,30) * 16;
-        tone(base, .07, "square", .07);
-        tone(base*1.5, .06, "square", .03, .01);
+        var base = 360 + Math.min(combo,30) * 18;
+        noiseHit(.06, 900, 200, "lowpass", .16);
+        tone(base, .07, "triangle", .1);
+        tone(base*2, .05, "square", .035, .015);
       }
+      // 被叮："嗡"的振翅 + 往下坠的痛感
       function biteSound(dmg){
-        slide(dmg > 1 ? 240 : 180, 60, .16, "sawtooth", .08);
+        buzz(640, 460, .12, .05);
+        slide(dmg > 1 ? 260 : 200, 64, .2, "sawtooth", .08, .03);
+        noiseHit(.05, 300, 120, "lowpass", .08, .03);
       }
       function comboSound(level){
-        // 连击进阶提示音
-        if(level === 2) jingle([523,659,784], "square", .07);
-        else if(level === 3) jingle([659,880,1047], "square", .06);
+        // 连击进阶提示音：五声音阶上行 + 高八度点缀
+        if(level === 2){ jingle([523,659,784], "square", .07); tone(1568, .1, "triangle", .04, .14); }
+        else if(level === 3){ jingle([659,880,1047], "square", .06); tone(2093, .12, "triangle", .045, .12); }
       }
-      function missSound(){ tone(110, .05, "sine", .05); slide(120,70,.08,"sine",.04); }
-      function enrageSound(){ slide(160,300,.12,"sawtooth",.07); }
+      // 空挥：只有风声，轻而不吵
+      function missSound(){
+        noiseHit(.09, 1500, 350, "bandpass", .05, 0, 1.4);
+        tone(90, .05, "sine", .03);
+      }
+      // 激怒：上扬的愤怒振翅
+      function enrageSound(){
+        buzz(420, 880, .22, .06);
+        slide(150, 330, .16, "square", .04, .04);
+      }
       function shieldSound(broke){
-        if(broke){ jingle([784,988,1319,1568], "square", .07); }
-        else { tone(330, .05, "square", .06); tone(495, .05, "square", .03, .02); }
+        if(broke){
+          // 破盾：碎裂噪声 + 下落琶音
+          noiseHit(.3, 4000, 600, "highpass", .12);
+          jingle([1568,1245,932,740], "square", .055);
+          tone(523, .25, "triangle", .07, .24);
+        }else{
+          // 击盾：金属脆响
+          tone(1245, .045, "square", .06);
+          noiseHit(.03, 5000, 5000, "highpass", .06, 0, .8);
+          tone(830, .05, "triangle", .04, .01);
+        }
       }
-      function winJingle(){ jingle([523,659,784,1047,1319], "square", .12); }
-      function loseJingle(){ jingle([392,330,262,196], "triangle", .14); }
-      function peaceJingle(){ jingle([523,659,784,659,523], "sine", .16); }
+      // 胜利：上行号角 + 收尾大三和弦
+      function winJingle(){
+        jingle([523,659,784,1047], "square", .11);
+        tone(1047, .5, "square", .07, .44);
+        tone(1319, .5, "square", .05, .44);
+        tone(1568, .5, "triangle", .05, .44);
+        noiseHit(.25, 3000, 800, "bandpass", .04, .44, 1.2);
+      }
+      // 失败：下行叹气 + 低音闷响
+      function loseJingle(){
+        jingle([392,370,330], "triangle", .14);
+        slide(262, 196, .45, "triangle", .09, .42);
+        noiseHit(.2, 240, 80, "lowpass", .07, .42);
+      }
+      // 和平：柔和的五度钟声摇篮曲
+      function peaceJingle(){
+        var melody = [523,659,784,659,523];
+        for(var i=0;i<melody.length;i++){
+          tone(melody[i], .3, "sine", .08, i*.17);
+          tone(melody[i]*1.5, .3, "sine", .03, i*.17);
+        }
+        tone(1047, .6, "sine", .04, .85);
+      }
 
       function pick(list){ return list[Math.floor(Math.random()*list.length)]; }
       function rand(a,b){ return a + Math.random() * (b-a); }
