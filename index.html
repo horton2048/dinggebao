@@ -627,7 +627,7 @@
 
     <section class="screen start-screen" id="start">
       <div class="start-actions" id="startActions">
-        <button class="btn" id="startBtn" type="button">开始游戏</button>
+        <button class="btn" id="startBtn" type="button">开始挑战</button>
         <div class="start-secondary-actions">
           <button class="start-mini-btn" id="rankBtn" type="button">排行榜</button>
           <button class="start-mini-btn share" id="shareBtn" type="button">分享</button>
@@ -650,7 +650,7 @@
           </div>
         </div>
         <ol class="rank-list" id="rankList">
-          <li style="padding:16px; text-align:center; color:#999; font-size:12px">暂无数据·首次游玩后生成</li>
+          <li style="padding:16px; text-align:center; color:#999; font-size:12px">暂无数据·首次挑战后生成</li>
         </ol>
         <div class="rank-foot" id="rankFooter">本地排行榜</div>
       </div>
@@ -784,7 +784,7 @@
         "no_hurt": {name:"金钟罩", icon:"🛡️"},
         "beat_king": {name:"蚊王克星", icon:"👑💥"},
         "peace_master": {name:"和平使者", icon:"✌️"},
-        "all_levels": {name:"全部通关", icon:"🏆"}
+        "all_levels": {name:"全部完成", icon:"🏆"}
       };
 
       var mosquitoes = [];
@@ -1194,13 +1194,13 @@
         var leaderboard = getLeaderboard(10);
         var html = '<ol class="rank-list" style="margin:0; padding:0; list-style:none">';
         if(leaderboard.length === 0){
-          html += '<li style="padding:16px; text-align:center; color:#999; font-size:12px">暂无数据·首次游玩后生成</li>';
+          html += '<li style="padding:16px; text-align:center; color:#999; font-size:12px">暂无数据·首次挑战后生成</li>';
         }else{
           leaderboard.forEach(function(r, idx){
             var levelText = "第" + r.level + "关";
             html += '<li class="rank-row' + (idx === 0 ? ' leader' : '') + '" style="padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:space-between">';
             html += '<b style="width:30px">' + (idx + 1) + '</b>';
-            html += '<span style="flex:1; margin:0 8px"><em>游戏</em><small class="tag" style="display:block; font-size:10px; color:#999; margin-top:2px">' + levelText + '·' + r.bestCombo + '连击</small></span>';
+            html += '<span style="flex:1; margin:0 8px"><em>挑战记录</em><small class="tag" style="display:block; font-size:10px; color:#999; margin-top:2px">' + levelText + '·' + r.bestCombo + '连击</small></span>';
             html += '<strong style="color:' + (idx === 0 ? '#ffe15a' : '#fff') + '">' + r.score + '</strong>';
             html += '</li>';
           });
@@ -1670,7 +1670,7 @@
             else if(level === 5) startLevel6();
           }, 1500);
         }else{
-          // 最后一关（第6关），游戏结束
+          // 最后一关（第6关），挑战结束
           finish(outcome);
         }
       }
@@ -1724,8 +1724,8 @@
           resultText.textContent = "你在" + levelMsg + "放下了拍子，与蚊子握手言和。" + resultStatsText();
           peaceJingle();
         }else if(outcome === "battle"){
-          resultTitle.textContent = level >= 6 ? "全部通关！" : "蚊王已灭";
-          resultText.textContent = (level >= 6 ? "你打爆了所有关卡的蚊王，成为最强灭蚊者！" : "护盾被你拍爆！") + resultStatsText();
+          resultTitle.textContent = level >= 6 ? "全部完成！" : "蚊王已灭";
+          resultText.textContent = (level >= 6 ? "你打爆了每一关的蚊王，成为最强灭蚊者！" : "护盾被你拍爆！") + resultStatsText();
           winJingle();
         }else{
           resultTitle.textContent = "被叮爆了";
@@ -1959,7 +1959,7 @@
         var rank = getPlayerRank();
         var bestLine = best > 0 ? "最高分 " + best + "，排名第" + rank : "正在冲击排行榜";
         var achieveLine = achieveCount > 0 ? "已解锁" + achieveCount + "个成就" : "快来挑战";
-        return "我在《叮了个包》" + bestLine + "，" + achieveLine + "。你能超越我吗？🎮";
+        return "我在《叮了个包》" + bestLine + "，" + achieveLine + "。你能超越我吗？🦟";
       }
       function refreshSharePreview(){
         if(sharePreview) sharePreview.textContent = shareText();
