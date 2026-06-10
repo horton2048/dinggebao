@@ -758,25 +758,11 @@
       var L3_MOB_CAP = 48;        // 第三关场上小蚊上限
       var L3_REVENGE_RATE = 0.78; // 召唤出愤怒蚊的概率
 
-      // ===== 多关卡配置 =====
-      var levelConfigs = [
-        {level:1, name:"初入虫海", count:8, mobCap:30, descrip:"8 只普通蚊子，无伤害"},
-        {level:2, name:"复仇时刻", count:13, countRevenge:5, mobCap:50, descrip:"母蚊孵化，躲避愤怒蚊"},
-        {level:3, name:"蚊王出世", count:0, kingShield:26, guardCount:4, mobCap:48, descrip:"击败蚊王或选择和平"},
-        {level:4, name:"毒蚊浪潮", count:16, mobCap:65, spawnBase:750, spawnMin:280, descrip:"16 只蚊子，拍击强化"},
-        {level:5, name:"群蚊狂欢", count:12, mobCap:70, spawnBase:600, spawnMin:200, descrip:"12 只蚊子，超快繁衍"},
-        {level:6, name:"终极挑战", count:20, mobCap:85, spawnBase:500, spawnMin:150, descrip:"20 只蚊子，地狱难度"}
-      ];
-      var currentLevelConfig = levelConfigs[0];
-
       // ===== 成就系统定义 =====
       var achievementDefs = {
         "first_kill": {name:"初试锋芒", icon:"🔪"},
         "reach_lvl2": {name:"苦战中", icon:"⚔️"},
         "reach_lvl3": {name:"蚊王挑战", icon:"👑"},
-        "reach_lvl4": {name:"毒蚊克星", icon:"💀"},
-        "reach_lvl5": {name:"群蚊猎手", icon:"🌊"},
-        "reach_lvl6": {name:"终极狩猎", icon:"⭐"},
         "score_100": {name:"百分达成", icon:"💯"},
         "score_300": {name:"炉火纯青", icon:"🔥"},
         "combo_10": {name:"连击大师", icon:"⚡"},
@@ -1035,98 +1021,6 @@
         raf = requestAnimationFrame(loop);
       }
 
-      // ===== 多关卡支持 =====
-      function getLevelConfig(lvl){
-        for(var i=0;i<levelConfigs.length;i++){
-          if(levelConfigs[i].level === lvl) return levelConfigs[i];
-        }
-        return levelConfigs[0];
-      }
-
-      function startLevel4(){
-        level = 4;
-        currentLevelConfig = getLevelConfig(4);
-        mosquitoes.forEach(function(m){ m.el.remove(); });
-        mosquitoes = [];
-        mother = null;
-        remaining = currentLevelConfig.count;
-        angryRemaining = 0;
-        modeEl.textContent = "蚊子";
-        showBetween(currentLevelConfig.name, currentLevelConfig.descrip);
-        delay(hideBetween, 1600);
-        for(var i=0;i<currentLevelConfig.count;i++){
-          var point = scatterPoint(i, currentLevelConfig.count);
-          spawnMosquito(point.x, point.y, "normal");
-        }
-        hatched = true;
-        running = true;
-        last = 0;
-        MOB_CAP = currentLevelConfig.mobCap || MOB_CAP;
-        SPAWN_BASE = currentLevelConfig.spawnBase || SPAWN_BASE;
-        SPAWN_MIN = currentLevelConfig.spawnMin || SPAWN_MIN;
-        spawnTimer = SPAWN_BASE;
-        spawnInterval = SPAWN_BASE;
-        lv2Elapsed = 0;
-        updateHud();
-        raf = requestAnimationFrame(loop);
-      }
-
-      function startLevel5(){
-        level = 5;
-        currentLevelConfig = getLevelConfig(5);
-        mosquitoes.forEach(function(m){ m.el.remove(); });
-        mosquitoes = [];
-        mother = null;
-        remaining = currentLevelConfig.count;
-        angryRemaining = 0;
-        modeEl.textContent = "蚊子";
-        showBetween(currentLevelConfig.name, currentLevelConfig.descrip);
-        delay(hideBetween, 1600);
-        for(var i=0;i<currentLevelConfig.count;i++){
-          var point = scatterPoint(i, currentLevelConfig.count);
-          spawnMosquito(point.x, point.y, Math.random() < 0.3 ? "revenge" : "normal");
-        }
-        hatched = true;
-        running = true;
-        last = 0;
-        MOB_CAP = currentLevelConfig.mobCap || MOB_CAP;
-        SPAWN_BASE = currentLevelConfig.spawnBase || 600;
-        SPAWN_MIN = currentLevelConfig.spawnMin || 200;
-        spawnTimer = SPAWN_BASE;
-        spawnInterval = SPAWN_BASE;
-        lv2Elapsed = 0;
-        updateHud();
-        raf = requestAnimationFrame(loop);
-      }
-
-      function startLevel6(){
-        level = 6;
-        currentLevelConfig = getLevelConfig(6);
-        mosquitoes.forEach(function(m){ m.el.remove(); });
-        mosquitoes = [];
-        mother = null;
-        remaining = currentLevelConfig.count;
-        angryRemaining = 0;
-        modeEl.textContent = "蚊子";
-        showBetween("最终决战", "击败所有蚊子，获得最终胜利！");
-        delay(hideBetween, 1600);
-        for(var i=0;i<currentLevelConfig.count;i++){
-          var point = scatterPoint(i, currentLevelConfig.count);
-          spawnMosquito(point.x, point.y, Math.random() < 0.5 ? "revenge" : "normal");
-        }
-        hatched = true;
-        running = true;
-        last = 0;
-        MOB_CAP = currentLevelConfig.mobCap || MOB_CAP;
-        SPAWN_BASE = currentLevelConfig.spawnBase || 500;
-        SPAWN_MIN = currentLevelConfig.spawnMin || 150;
-        spawnTimer = SPAWN_BASE;
-        spawnInterval = SPAWN_BASE;
-        lv2Elapsed = 0;
-        updateHud();
-        raf = requestAnimationFrame(loop);
-      }
-
       // ===== 排行榜和成就 =====
       function getLeaderboard(limit){
         var sorted = gameRecords.slice().sort(function(a,b){ return b.score - a.score; });
@@ -1173,9 +1067,6 @@
         if(bestCombo >= 20) unlockAchievement("combo_20");
         if(level >= 2) unlockAchievement("reach_lvl2");
         if(level >= 3) unlockAchievement("reach_lvl3");
-        if(level >= 4) unlockAchievement("reach_lvl4");
-        if(level >= 5) unlockAchievement("reach_lvl5");
-        if(level >= 6) unlockAchievement("reach_lvl6");
         if(hp === MAX_HP) unlockAchievement("no_hurt");
       }
 
@@ -1657,24 +1548,6 @@
       function hidePeace(){ peacebubbleEl.classList.remove("show"); }
 
       // ===== 结局 =====
-      function nextLevelOrEnd(outcome){
-        if(level < 6){
-          // 非最后一关，过渡到下一关
-          running = false;
-          cancelAnimationFrame(raf);
-          delay(function(){
-            if(level === 1) startLevel2();
-            else if(level === 2) startLevel3();
-            else if(level === 3) startLevel4();
-            else if(level === 4) startLevel5();
-            else if(level === 5) startLevel6();
-          }, 1500);
-        }else{
-          // 最后一关（第6关），挑战结束
-          finish(outcome);
-        }
-      }
-
       function lose(){
         running = false;
         cancelAnimationFrame(raf);
@@ -1684,21 +1557,13 @@
         running = false;
         cancelAnimationFrame(raf);
         defeatedCount += 1;
-        if(level < 3){
-          nextLevelOrEnd("battle");
-        }else{
-          nextLevelOrEnd("battle");
-        }
+        finish("battle");
       }
       function peaceEnding(){
         running = false;
         cancelAnimationFrame(raf);
         hidePeace();
-        if(level < 3){
-          nextLevelOrEnd("peace");
-        }else{
-          nextLevelOrEnd("peace");
-        }
+        finish("peace");
       }
 
       function finish(outcome){
@@ -1710,7 +1575,7 @@
 
         if(outcome === "peace") unlockAchievement("peace_master");
         if(outcome === "battle" && level >= 3) unlockAchievement("beat_king");
-        if(level >= 6) unlockAchievement("all_levels");
+        if(level >= 3 && outcome !== "lose") unlockAchievement("all_levels");
 
         var record = score > highScore;
         if(record){
@@ -1718,18 +1583,17 @@
           try{ localStorage.setItem("dinggebao_best", String(highScore)); }catch(error){}
         }
 
-        var levelMsg = level >= 4 ? "第" + level + "关" : (level === 3 ? "蚊王关" : "第" + level + "关");
         if(outcome === "peace"){
           resultTitle.textContent = "世界和平 ✌";
-          resultText.textContent = "你在" + levelMsg + "放下了拍子，与蚊子握手言和。" + resultStatsText();
+          resultText.textContent = "你放下了拍子，与蚊子握手言和。" + resultStatsText();
           peaceJingle();
         }else if(outcome === "battle"){
-          resultTitle.textContent = level >= 6 ? "全部完成！" : "蚊王已灭";
-          resultText.textContent = (level >= 6 ? "你打爆了每一关的蚊王，成为最强灭蚊者！" : "护盾被你拍爆！") + resultStatsText();
+          resultTitle.textContent = "蚊王已灭";
+          resultText.textContent = "护盾被你拍爆，全世界的蚊子都被消灭了！" + resultStatsText();
           winJingle();
         }else{
           resultTitle.textContent = "被叮爆了";
-          resultText.textContent = "在" + levelMsg + "额头起满了包… " + resultStatsText();
+          resultText.textContent = "额头起满了包… " + resultStatsText();
           loseJingle();
         }
 
